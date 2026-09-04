@@ -1,0 +1,9 @@
+{
+  "name": "airtight-staging",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/disclosure.test.js && node test/notary.test.mjs && node test/resume.test.mjs",
+    "example": "node selective_disclosure/example.js"
+  }
+}
