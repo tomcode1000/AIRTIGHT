@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Local memory stores — the deletion test wipes these for real
+*.db
+*.sqlite
+*.sqlite3
+.airtight-memory/
+
+# Generated demo/example output
+airtight/data/
+*.log
+
+.DS_Store
+Thumbs.db
