@@ -6,6 +6,8 @@
   "description": "Crash-proof deal memory for agents that pay.",
   "license": "MIT",
   "scripts": {
-    "test": "node test/memory.test.mjs && node ../staging/test/disclosure.test.js && node ../staging/test/notary.test.mjs && node ../staging/test/resume.test.mjs"
+    "test": "node test/memory.test.mjs && node staging/test/disclosure.test.js && node staging/test/notary.test.mjs && node staging/test/resume.test.mjs && node chaos/sigkill.test.mjs",
+    "chaos": "node chaos/sigkill.test.mjs",
+    "example": "node staging/selective_disclosure/example.js"
   }
 }
