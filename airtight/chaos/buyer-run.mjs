@@ -28,7 +28,27 @@ const TERMS = {
 };
 const PAYLOAD = 'the delivered research report, verbatim';
 
-const say = s => { process.stdout.write(s + '\n'); };
+/**
+ * Filming aid. The run completes in milliseconds, which leaves no window to
+ * kill it on camera, so AIRTIGHT_HOLD_AT=<boundary> parks the process there
+ * with a visible banner and waits to be killed. It holds forever rather than
+ * timing out: the operator, not a timer, decides when the kill lands.
+ *
+ * This only changes WHEN the process stops, never what it writes — the record
+ * at the moment of the kill is identical either way, which is what keeps the
+ * filmed take honest.
+ */
+const HOLD_AT = process.env.AIRTIGHT_HOLD_AT || null;
+
+const say = s => {
+  process.stdout.write(s + '\n');
+  if (HOLD_AT && s === HOLD_AT) {
+    process.stdout.write(`\n  ── holding at ${s} ── kill -9 ${process.pid} ──\n\n`);
+    // Block the event loop entirely: no timers, no I/O, nothing that could
+    // advance the deal while the camera is on it.
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
+  }
+};
 
 // The mocked settlement. Appending here is the irreversible act that a real
 // USDC transfer would be — if this file ever gets two lines for one deal, we
@@ -43,6 +63,14 @@ const mem = new DealMemory(new FileDriver(store));
 // ── cold start ─────────────────────────────────────────────────────────────
 let deal = mem.get(dealId);
 if (!deal) {
+  // Being told to CONTINUE a deal we have no record of is the dangerous case:
+  // the seller may already have been paid, and opening a fresh deal under the
+  // same id would pay them again. Absence of memory is not permission to start
+  // over, so resume-only runs refuse instead.
+  if (process.env.AIRTIGHT_RESUME_ONLY === '1') {
+    say(`REFUSAL:no verifiable deal state for ${dealId} — refusing to sign or pay`);
+    process.exit(3);
+  }
   deal = mem.open({ dealId, role: 'buyer', terms: TERMS });
   say('AT:INTENT');
 } else {
