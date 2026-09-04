@@ -1,0 +1,11 @@
+{
+  "name": "airtight",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Crash-proof deal memory for agents that pay.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/memory.test.mjs && node ../staging/test/disclosure.test.js && node ../staging/test/notary.test.mjs && node ../staging/test/resume.test.mjs"
+  }
+}
