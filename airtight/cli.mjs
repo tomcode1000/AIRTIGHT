@@ -14,10 +14,15 @@
  * Store defaults to ./.airtight-memory, or $AIRTIGHT_STORE.
  */
 import { FileDriver } from './memory/driver-file.mjs';
+import { SibylDriver } from './memory/driver-sibyl.mjs';
 import { DealMemory } from './memory/deals.mjs';
 import { assessDeal, termsHash, VERDICT } from './staging/selective_disclosure/resume.mjs';
 import { verifyAttestation } from './staging/selective_disclosure/notary.mjs';
 
+// Sibyl Memory is the substrate. FileDriver is a test double, selected only by
+// an explicit AIRTIGHT_MEMORY=file — never the default, so the recall surface a
+// judge runs reads the same store the agent wrote to.
+const USE_FILE = process.env.AIRTIGHT_MEMORY === 'file';
 const STORE = process.env.AIRTIGHT_STORE || '.airtight-memory';
 const [cmd, arg] = process.argv.slice(2);
 
@@ -27,7 +32,11 @@ const C = process.stdout.isTTY && !process.env.NO_COLOR
   : { dim: s => s, b: s => s, g: s => s, r: s => s, y: s => s };
 
 const short = h => h ? `${String(h).replace(/^0x/, '').slice(0, 6)}…${String(h).slice(-4)}` : '—';
-const mem = new DealMemory(new FileDriver(STORE));
+const driver = USE_FILE
+  ? new FileDriver(STORE)
+  : new SibylDriver({ bin: process.env.SIBYL_MCP_BIN || 'sibyl-memory-mcp', db: process.env.SIBYL_MEMORY_DB || null });
+const mem = new DealMemory(driver);
+const where = () => USE_FILE ? `file:${STORE}` : `sibyl:${driver.dbPath}`;
 
 async function ls() {
   const ids = await mem.listDeals();
@@ -93,6 +102,7 @@ async function verify(id) {
   process.exit(a.verdict === VERDICT.RESUME ? 0 : 3);
 }
 
+try {
 switch (cmd) {
   case 'ls': await ls(); break;
   case 'recall': if (!arg) { console.log('usage: airtight recall <deal_id>'); process.exit(2); } await recall(arg); break;
@@ -102,5 +112,7 @@ switch (cmd) {
     console.log('  airtight ls');
     console.log('  airtight recall <deal_id>');
     console.log('  airtight verify <deal_id>\n');
-    console.log(`store: ${STORE}  (override with AIRTIGHT_STORE)`);
+    console.log(`store: ${where()}`);
+    console.log('       AIRTIGHT_MEMORY=file uses the local test driver instead');
 }
+} finally { driver.close?.(); }
