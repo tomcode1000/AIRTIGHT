@@ -29,6 +29,29 @@ import { DealMemory } from '../memory/deals.mjs';
 import { assessDeal, mayTransfer, VERDICT } from '../staging/selective_disclosure/resume.mjs';
 import { signPayment, headerFromStored, fetchChallenge, submitPayment } from '../x402/pay.mjs';
 import { deriveAddress } from '../staging/x402/signer.mjs';
+import { verifyAttestation, payloadHash } from '../staging/selective_disclosure/notary.mjs';
+
+/**
+ * Store the seller's signed statement of what it delivered, after checking it
+ * actually covers the bytes we received. From here on the record is
+ * self-incriminating for them: assessDeal re-verifies it on every wake, and a
+ * valid signature over the wrong payload is what earns DISPUTED rather than a
+ * REFUSAL. An unattested delivery is recorded as unattested, not rejected -
+ * most sellers will never sign anything.
+ */
+async function recordAttestation(mem, dealId, deal, att, body) {
+  if (!att) return { attested: false, reason: 'seller signed nothing' };
+  // Bind only what BOTH sides can compute: the payment fingerprint as the
+  // shared deal id, and the seller's address. Their termsHash and merkleRoot
+  // are over their own record, which we cannot reconstruct and must not assert.
+  const res = verifyAttestation(att, {
+    dealId: deal.payment?.fingerprint, signer: deal.terms.pay_to,
+  });
+  if (!res.ok) return { attested: false, reason: `attestation rejected: ${res.reason}` };
+  await mem.putAttestation(att);
+  const matches = att.payloadHash.toLowerCase() === payloadHash(body);
+  return { attested: true, matches, signer: res.signer };
+}
 
 const [resourceUrl, dealIdArg] = process.argv.slice(2);
 if (!resourceUrl) { console.error('usage: node buyer/agent.mjs <resource-url> [deal-id]'); process.exit(2); }
@@ -174,6 +197,10 @@ async function main() {
           received_at: new Date().toISOString(), bytes: Buffer.byteLength(r.body),
         },
       });
+      const a = await recordAttestation(mem, dealId, deal, r.attestation, r.body);
+      say(a.attested
+        ? `AT:ATTESTED seller signed delivery · payload ${a.matches ? 'matches ✓' : 'MISMATCH ✗'}`
+        : `AT:UNATTESTED ${a.reason}`);
       say('AT:DELIVERED');
     } else {
       say(`REFUSAL settlement not confirmable (HTTP ${r.status})`);

@@ -16,6 +16,74 @@ INTENT → QUOTED → AUTHORIZED → IN_FLIGHT → PAID(tx) → DELIVERED(hash) 
                     PAID/DELIVERED/CLOSED --evidence--> DISPUTED (terminal)
 ```
 
+## Using it in your agent
+
+AIRTIGHT is a layer, not an application. The buyer agent in this repo is the
+proof, not the product.
+
+```js
+import {
+  DealMemory, SibylDriver, signPayment, headerFromStored,
+  assessDeal, mayTransfer, submitPayment,
+} from 'airtight';
+
+const mem = new DealMemory(new SibylDriver());
+
+// 1. On wake, ask what you are allowed to do. Never assume.
+const prior = await mem.get(dealId);
+if (prior) {
+  const v = assessDeal({ deal: prior, attestations: await mem.getAttestations(dealId) });
+  if (v.verdict !== 'RESUME') return;        // REFUSAL, or DISPUTED with evidence
+}
+
+// 2. Commit to the terms before signing anything.
+const deal = await mem.open({ role: 'buyer', terms });
+
+// 3. Sign → store → THEN pay. This order is the product.
+const signed = signPayment({ privateKey, requirements });
+if (!await mem.claimFingerprint(signed.fingerprint, deal.deal_id)) return;   // would double-pay
+await mem.transition(deal.deal_id, 'IN_FLIGHT', {
+  payment: { fingerprint: signed.fingerprint, x402: signed.stored },
+});
+await submitPayment(url, signed.header);
+```
+
+Killed anywhere above, the next run resumes and re-submits
+`headerFromStored(deal.payment.x402)` — the **same** EIP-3009 nonce, which the
+token contract honours exactly once. Signing a fresh one instead is the
+double-pay.
+
+`transition()` refuses to record a state whose evidence is missing, so the
+action it guards never happens. That is what makes the memory load-bearing
+rather than advisory.
+
+## Features, and where they live
+
+Every one of these stores its state in Sibyl Memory. The Sibyl category each
+writes is named, so you can verify with `sibyl memory list` rather than trust
+this table.
+
+| Feature | Sibyl category | Code |
+|---|---|---|
+| **Deal state machine** — write-before-act; a state cannot be entered without its evidence | `airtight-deal` | [memory/deals.mjs](airtight/memory/deals.mjs) |
+| **Payment replay guard** — fingerprints claimed *before* signing, persisted across restarts | `airtight-fp` | [memory/deals.mjs](airtight/memory/deals.mjs) |
+| **Idempotent payment** — the signed EIP-3009 authorisation stored before submitting, re-submitted on wake | `airtight-deal` (`payment.x402`) | [x402/pay.mjs](airtight/x402/pay.mjs) |
+| **Resume-on-wake / refuse-blind** — decides RESUME, REFUSAL or DISPUTED from storage alone | reads all | [resume.mjs](airtight/staging/selective_disclosure/resume.mjs) |
+| **Delivery notarisation** — the seller signs what it delivered, under a domain disjoint from USDC's | `airtight-att` | [notary.mjs](airtight/staging/selective_disclosure/notary.mjs) |
+| **Selective disclosure** — commit to terms, reveal chosen fields with proofs; blinding nonces held apart from the shareable record | `airtight-witness` | [merkle.js](airtight/staging/selective_disclosure/merkle.js) |
+| **Recall surface** — a cold process reading only what reached storage | reads all | [cli.mjs](airtight/cli.mjs) |
+
+A live deal writes all four categories:
+
+```
+$ sibyl memory list
+E N T I T I E S   ( 4 )
+  airtight-deal/att-1
+  airtight-att/4662c672…47cc:delivery
+  airtight-fp/4662c672…47cc
+  airtight-witness/att-1
+```
+
 ## Where memory is load-bearing
 
 Delete the memory and the product stops working — that is the design, not a

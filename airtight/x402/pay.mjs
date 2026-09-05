@@ -113,11 +113,16 @@ export async function submitPayment(url, header, { timeoutMs = 60000 } = {}) {
   });
   const text = await res.text();
   const receiptHeader = res.headers.get('x-payment-response');
+  const attHeader = res.headers.get('x-airtight-attestation');
+  let attestation = null;
+  if (attHeader) {
+    try { attestation = JSON.parse(Buffer.from(attHeader, 'base64').toString('utf8')); } catch {}
+  }
   let receipt = null;
   if (receiptHeader) {
     try { receipt = JSON.parse(Buffer.from(receiptHeader, 'base64').toString('utf8')); } catch {}
   }
-  return { status: res.status, body: text, receipt };
+  return { status: res.status, body: text, receipt, attestation };
 }
 
 export default { signPayment, headerFromStored, fingerprintFor, fingerprintOfStored, fetchChallenge, submitPayment, encodeHeader, CHAIN_IDS };

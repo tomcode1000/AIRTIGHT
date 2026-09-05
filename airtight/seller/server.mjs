@@ -21,6 +21,8 @@ import { buildPaymentRequirements, decodePaymentHeader, verifyPayment, settlePay
 import { FileDriver } from '../memory/driver-file.mjs';
 import { DealMemory } from '../memory/deals.mjs';
 import { fingerprintFor } from '../x402/pay.mjs';
+import { notarize, payloadHash } from '../staging/selective_disclosure/notary.mjs';
+import { CHAIN_IDS } from '../x402/pay.mjs';
 
 const PORT = Number(process.argv[2] || process.env.PORT || 4021);
 const STORE = process.env.AIRTIGHT_SELLER_STORE || '.airtight-seller';
@@ -33,6 +35,28 @@ const PAYLOAD = JSON.stringify({
 
 const mem = new DealMemory(new FileDriver(STORE));
 const log = (...a) => console.log(new Date().toISOString(), ...a);
+
+/**
+ * Sign what we are about to deliver, with the SAME key that receives payment.
+ * The buyer can then hold us to it: if the bytes do not hash to what we signed,
+ * our own signature is the evidence. Optional - a seller with no key simply
+ * delivers unattested, and the buyer records that it is unattested.
+ */
+function attestDelivery({ dealId, termsHash, merkleRoot, body, network }) {
+  // dealId here is the PAYMENT FINGERPRINT, not our local record name. The two
+  // sides of a deal name it differently in their own stores; the fingerprint is
+  // the only identifier both derive identically, so it is what a cross-party
+  // signature has to bind to.
+  const key = process.env.DEMO_SELLER_KEY;
+  if (!key || !/^0x[0-9a-fA-F]{64}$/.test(key)) return null;
+  try {
+    return notarize({
+      privateKey: key, dealId, role: 'seller', kind: 'delivery',
+      termsHash, merkleRoot, payloadHash: payloadHash(body),
+      chainId: CHAIN_IDS[network] ?? 84532,
+    });
+  } catch (e) { log('attestation skipped:', e.message); return null; }
+}
 
 function resourceUrl(req) {
   const host = req.headers.host || `localhost:${PORT}`;
@@ -106,7 +130,9 @@ const server = http.createServer(async (req, res) => {
         // and that is barred by the fingerprint claim below and by the
         // on-chain nonce.
         log('replay: re-serving delivered payload for', fp.slice(0, 12));
+        const priorAtt = await mem.getAttestation(`seller-${fp.slice(0, 12)}`, 'delivery');
         res.writeHead(200, {
+          ...(priorAtt ? { 'X-AIRTIGHT-ATTESTATION': Buffer.from(JSON.stringify(priorAtt)).toString('base64') } : {}),
           'Content-Type': 'application/json',
           'X-AIRTIGHT-REPLAY': 'true',
           'X-PAYMENT-RESPONSE': Buffer.from(JSON.stringify({
@@ -166,7 +192,16 @@ const server = http.createServer(async (req, res) => {
     });
     await mem.transition(dealId, 'CLOSED');
 
-    res.writeHead(200, { 'Content-Type': 'application/json', 'X-PAYMENT-RESPONSE': headerValue });
+    const closed = await mem.get(dealId);
+    const att = attestDelivery({
+      dealId: fp, termsHash: closed.terms_hash, merkleRoot: closed.disclosure.merkle_root,
+      body: PAYLOAD, network: accept.network,
+    });
+    if (att) await mem.putAttestation(att);
+
+    const headers = { 'Content-Type': 'application/json', 'X-PAYMENT-RESPONSE': headerValue };
+    if (att) headers['X-AIRTIGHT-ATTESTATION'] = Buffer.from(JSON.stringify(att)).toString('base64');
+    res.writeHead(200, headers);
     return res.end(PAYLOAD);
   } catch (e) {
     log('ERROR', e.message);

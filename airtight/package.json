@@ -14,5 +14,9 @@
     "buyer": "node buyer/agent.mjs",
     "burner": "node scripts/new-burner.mjs",
     "onchain": "node scripts/onchain.mjs"
+  },
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs"
   }
 }
