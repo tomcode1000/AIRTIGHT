@@ -29,19 +29,19 @@ const C = process.stdout.isTTY && !process.env.NO_COLOR
 const short = h => h ? `${String(h).replace(/^0x/, '').slice(0, 6)}…${String(h).slice(-4)}` : '—';
 const mem = new DealMemory(new FileDriver(STORE));
 
-function ls() {
-  const ids = mem.listDeals();
+async function ls() {
+  const ids = await mem.listDeals();
   if (!ids.length) return console.log(C.dim(`no deals in ${STORE}`));
   console.log(C.dim(`store ${STORE}\n`));
   for (const id of ids) {
-    let d; try { d = mem.get(id); } catch (e) { console.log(`  ${id}  ${C.r('CORRUPT')}`); continue; }
+    let d; try { d = await mem.get(id); } catch (e) { console.log(`  ${id}  ${C.r('CORRUPT')}`); continue; }
     console.log(`  ${id}  ${(d.state === 'CLOSED' ? C.g : d.state === 'DISPUTED' ? C.r : C.y)(d.state.padEnd(10))} ${C.dim(d.role)}`);
   }
 }
 
-function recall(id) {
+async function recall(id) {
   let deal;
-  try { deal = mem.get(id); }
+  try { deal = await mem.get(id); }
   catch (e) { console.log(C.r(`REFUSAL: ${e.message}`)); process.exit(3); }
 
   // The deletion beat lands here: no record, so nothing is claimed about it.
@@ -65,7 +65,7 @@ function recall(id) {
   console.log(`\n${C.dim('timeline')}`);
   for (const t of deal.transitions ?? []) console.log(`  ${t.to.padEnd(11)} ${C.dim(t.at)}`);
 
-  const atts = mem.getAttestations(id);
+  const atts = await mem.getAttestations(id);
   if (Object.keys(atts).length) {
     console.log(`\n${C.dim('attestations')}`);
     for (const [kind, att] of Object.entries(atts)) {
@@ -79,14 +79,14 @@ function recall(id) {
   const a = assessDeal({ deal, attestations: atts });
   console.log(`\n${C.dim('on wake')}   ${a.verdict === VERDICT.RESUME ? C.g(a.verdict) : a.verdict === VERDICT.DISPUTED ? C.r(a.verdict) : C.y(a.verdict)} → ${a.action}${a.reason ? C.dim('  (' + a.reason + ')') : ''}`);
   if (deal.payment?.fingerprint) {
-    const consumed = mem.isConsumed(deal.payment.fingerprint);
+    const consumed = await mem.isConsumed(deal.payment.fingerprint);
     console.log(`${C.dim('replay')}    fingerprint ${short(deal.payment.fingerprint)} ${consumed ? C.g('consumed — a second payment is refused') : C.dim('unclaimed')}`);
   }
 }
 
-function verify(id) {
-  let deal; try { deal = mem.get(id); } catch (e) { console.log(C.r(`REFUSAL: ${e.message}`)); process.exit(3); }
-  const a = assessDeal({ deal, attestations: deal ? mem.getAttestations(id) : {} });
+async function verify(id) {
+  let deal; try { deal = await mem.get(id); } catch (e) { console.log(C.r(`REFUSAL: ${e.message}`)); process.exit(3); }
+  const a = assessDeal({ deal, attestations: deal ? await mem.getAttestations(id) : {} });
   const colour = a.verdict === VERDICT.RESUME ? C.g : a.verdict === VERDICT.DISPUTED ? C.r : C.y;
   console.log(`${colour(a.verdict)}${a.reason ? ' — ' + a.reason : ''}`);
   if (a.evidence) console.log(JSON.stringify(a.evidence, null, 2));
@@ -94,9 +94,9 @@ function verify(id) {
 }
 
 switch (cmd) {
-  case 'ls': ls(); break;
-  case 'recall': if (!arg) { console.log('usage: airtight recall <deal_id>'); process.exit(2); } recall(arg); break;
-  case 'verify': if (!arg) { console.log('usage: airtight verify <deal_id>'); process.exit(2); } verify(arg); break;
+  case 'ls': await ls(); break;
+  case 'recall': if (!arg) { console.log('usage: airtight recall <deal_id>'); process.exit(2); } await recall(arg); break;
+  case 'verify': if (!arg) { console.log('usage: airtight verify <deal_id>'); process.exit(2); } await verify(arg); break;
   default:
     console.log('airtight — read the agent\'s own deal memory\n');
     console.log('  airtight ls');

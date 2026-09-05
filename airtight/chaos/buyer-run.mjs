@@ -61,7 +61,7 @@ function settle(fingerprint) {
 const mem = new DealMemory(new FileDriver(store));
 
 // ── cold start ─────────────────────────────────────────────────────────────
-let deal = mem.get(dealId);
+let deal = await mem.get(dealId);
 if (!deal) {
   // Being told to CONTINUE a deal we have no record of is the dangerous case:
   // the seller may already have been paid, and opening a fresh deal under the
@@ -71,10 +71,10 @@ if (!deal) {
     say(`REFUSAL:no verifiable deal state for ${dealId} — refusing to sign or pay`);
     process.exit(3);
   }
-  deal = mem.open({ dealId, role: 'buyer', terms: TERMS });
+  deal = await mem.open({ dealId, role: 'buyer', terms: TERMS });
   say('AT:INTENT');
 } else {
-  const a = assessDeal({ deal, attestations: mem.getAttestations(dealId) });
+  const a = assessDeal({ deal, attestations: await mem.getAttestations(dealId) });
   say(`RESUMED:${a.verdict}:${a.from ?? '-'}:${a.action}`);
   if (a.verdict !== VERDICT.RESUME) { say(`REFUSAL:${a.reason}`); process.exit(3); }
 }
@@ -85,28 +85,28 @@ const fp = paymentFingerprint({
 });
 
 // ── drive forward from wherever we actually are ────────────────────────────
-if (deal.state === 'INTENT') { deal = mem.transition(dealId, 'QUOTED'); say('AT:QUOTED'); }
+if (deal.state === 'INTENT') { deal = await mem.transition(dealId, 'QUOTED'); say('AT:QUOTED'); }
 
 if (deal.state === 'QUOTED') {
-  deal = mem.transition(dealId, 'AUTHORIZED', {
+  deal = await mem.transition(dealId, 'AUTHORIZED', {
     authorization: { payer: '0x2222222222222222222222222222222222222222', authorized_at: new Date().toISOString() },
   });
   say('AT:AUTHORIZED');
 }
 
 if (deal.state === 'AUTHORIZED') {
-  const guard = mayTransfer({ deal, assessment: assessDeal({ deal }), fingerprintConsumed: mem.isConsumed(fp) });
+  const guard = mayTransfer({ deal, assessment: assessDeal({ deal }), fingerprintConsumed: await mem.isConsumed(fp) });
   if (!guard.ok) { say(`BLOCKED:${guard.reason}`); process.exit(4); }
 
   // Claim, then record IN_FLIGHT, then settle. This ordering is the whole
   // point: the kill window sits between the durable claim and the settlement.
-  if (!mem.claimFingerprint(fp, dealId)) { say('BLOCKED:fingerprint already consumed'); process.exit(4); }
-  deal = mem.transition(dealId, 'IN_FLIGHT', { payment: { fingerprint: fp } });
+  if (!await mem.claimFingerprint(fp, dealId)) { say('BLOCKED:fingerprint already consumed'); process.exit(4); }
+  deal = await mem.transition(dealId, 'IN_FLIGHT', { payment: { fingerprint: fp } });
   say('AT:IN_FLIGHT');
 
   const tx = settle(fp);
   say('AT:SETTLED');
-  deal = mem.transition(dealId, 'PAID', { payment: { fingerprint: fp, tx_hash: tx, settled_at: new Date().toISOString() } });
+  deal = await mem.transition(dealId, 'PAID', { payment: { fingerprint: fp, tx_hash: tx, settled_at: new Date().toISOString() } });
   say('AT:PAID');
 }
 
@@ -127,12 +127,12 @@ if (deal.state === 'IN_FLIGHT') {
     // nonce is fixed and the token contract will only honour it once, which
     // makes this retry idempotent. Signing a FRESH nonce here is the
     // double-pay, and is what protocol issue #452 leaves undefined.
-    const claim = mem.driver.read('airtight-fp', fp);
+    const claim = await mem.driver.read('airtight-fp', fp);
     if (claim?.deal_id !== dealId) { say('REFUSAL:fingerprint belongs to another deal'); process.exit(3); }
     tx = settle(fp);
     say('AT:RESETTLED');
   }
-  deal = mem.transition(dealId, 'PAID', {
+  deal = await mem.transition(dealId, 'PAID', {
     payment: { fingerprint: fp, tx_hash: tx, settled_at: new Date().toISOString() },
   });
   say('AT:PAID');
@@ -140,7 +140,7 @@ if (deal.state === 'IN_FLIGHT') {
 
 if (deal.state === 'PAID') {
   const { createHash } = await import('node:crypto');
-  deal = mem.transition(dealId, 'DELIVERED', {
+  deal = await mem.transition(dealId, 'DELIVERED', {
     delivery: {
       payload_sha256: createHash('sha256').update(PAYLOAD).digest('hex'),
       received_at: new Date().toISOString(), bytes: Buffer.byteLength(PAYLOAD),
@@ -149,6 +149,6 @@ if (deal.state === 'PAID') {
   say('AT:DELIVERED');
 }
 
-if (deal.state === 'DELIVERED') { mem.transition(dealId, 'CLOSED'); say('AT:CLOSED'); }
+if (deal.state === 'DELIVERED') { await mem.transition(dealId, 'CLOSED'); say('AT:CLOSED'); }
 
 say('DONE');

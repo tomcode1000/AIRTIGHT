@@ -63,8 +63,8 @@ export class DealMemory {
   }
 
   // ── deal records ────────────────────────────────────────────────────────
-  get(dealId) { return this.driver.read(CAT.DEAL, dealId); }
-  listDeals() { return this.driver.list(CAT.DEAL); }
+  async get(dealId) { return this.driver.read(CAT.DEAL, dealId); }
+  async listDeals() { return this.driver.list(CAT.DEAL); }
 
   /**
    * Open a deal at INTENT and commit to its terms in one durable write.
@@ -73,16 +73,16 @@ export class DealMemory {
    * fixed before anything is negotiated — a root computed after the fact would
    * prove nothing about what the terms were at the start.
    */
-  open({ dealId = newDealId(), role, terms }) {
+  async open({ dealId = newDealId(), role, terms }) {
     if (role !== 'buyer' && role !== 'seller') throw new Error('open: role must be buyer|seller');
     if (!terms || typeof terms !== 'object') throw new Error('open: terms required');
-    if (this.get(dealId)) throw new Error(`open: deal ${dealId} already exists`);
+    if (await this.get(dealId)) throw new Error(`open: deal ${dealId} already exists`);
 
     const commitment = buildCommitment(terms);
     // Witness first: if we die between these two writes, we have nonces for a
     // deal that does not exist (harmless) rather than a root we can never open
     // (permanently undisclosable).
-    this.driver.write(CAT.WITNESS, dealId, {
+    await this.driver.write(CAT.WITNESS, dealId, {
       v: 1, root: commitment.root,
       fields: commitment.fields.map(f => ({ key: f.key, value: f.value, nonce: f.nonce })),
     });
@@ -96,7 +96,7 @@ export class DealMemory {
       transitions: [{ to: 'INTENT', at: now }],
       created_at: now, updated_at: now,
     };
-    this.driver.write(CAT.DEAL, dealId, deal);
+    await this.driver.write(CAT.DEAL, dealId, deal);
     return deal;
   }
 
@@ -108,8 +108,8 @@ export class DealMemory {
    * a caller that ignores a return value must not be able to proceed as if the
    * write had happened.
    */
-  transition(dealId, to, patch = {}) {
-    const deal = this.get(dealId);
+  async transition(dealId, to, patch = {}) {
+    const deal = await this.get(dealId);
     if (!deal) throw new Error(`transition: no deal record for ${dealId} — REFUSAL`);
     if (!LEGAL[deal.state]) throw new Error(`transition: unknown current state ${deal.state}`);
     if (!LEGAL[deal.state].includes(to)) {
@@ -130,7 +130,7 @@ export class DealMemory {
     const check = EVIDENCE[to]?.(next);
     if (typeof check === 'string') throw new Error(`transition: ${check}`);
 
-    this.driver.write(CAT.DEAL, dealId, next);
+    await this.driver.write(CAT.DEAL, dealId, next);
     return next;
   }
 
@@ -138,7 +138,7 @@ export class DealMemory {
   // Persisted, unlike acquisition-agent's in-memory Map ("restart clears it").
   // That admission in our own shipped code is the thesis this closes.
 
-  isConsumed(fingerprint) { return this.driver.read(CAT.FP, fingerprint) !== null; }
+  async isConsumed(fingerprint) { return (await this.driver.read(CAT.FP, fingerprint)) !== null; }
 
   /**
    * Claim a fingerprint before signing. Returns false if already consumed.
@@ -148,31 +148,31 @@ export class DealMemory {
    * by reconciling on chain. The reverse order would leave a settled payment
    * with no record, and the next wake would pay again.
    */
-  claimFingerprint(fingerprint, dealId) {
+  async claimFingerprint(fingerprint, dealId) {
     if (!/^[0-9a-f]{64}$/.test(String(fingerprint))) throw new Error('claimFingerprint: fingerprint must be 32 bytes of hex');
-    if (this.isConsumed(fingerprint)) return false;
-    this.driver.write(CAT.FP, fingerprint, { deal_id: dealId, consumed_at: iso() });
+    if (await this.isConsumed(fingerprint)) return false;
+    await this.driver.write(CAT.FP, fingerprint, { deal_id: dealId, consumed_at: iso() });
     return true;
   }
 
   // ── attestations & witness ──────────────────────────────────────────────
-  putAttestation(att) {
+  async putAttestation(att) {
     if (!att?.dealId || !att?.kind) throw new Error('putAttestation: attestation needs dealId and kind');
-    this.driver.write(CAT.ATT, `${att.dealId}:${att.kind}`, att);
+    await this.driver.write(CAT.ATT, `${att.dealId}:${att.kind}`, att);
     return att;
   }
-  getAttestation(dealId, kind) { return this.driver.read(CAT.ATT, `${dealId}:${kind}`); }
-  getAttestations(dealId) {
+  async getAttestation(dealId, kind) { return this.driver.read(CAT.ATT, `${dealId}:${kind}`); }
+  async getAttestations(dealId) {
     const out = {};
     for (const kind of ['prompt', 'result', 'delivery']) {
-      const a = this.getAttestation(dealId, kind);
+      const a = await this.getAttestation(dealId, kind);
       if (a) out[kind] = a;
     }
     return out;
   }
 
   /** Private — never include in anything sent to a counterparty. */
-  getWitness(dealId) { return this.driver.read(CAT.WITNESS, dealId); }
+  async getWitness(dealId) { return this.driver.read(CAT.WITNESS, dealId); }
 }
 
 export default { DealMemory, CAT, ORDER, newDealId, paymentFingerprint };

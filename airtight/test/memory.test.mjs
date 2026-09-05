@@ -24,11 +24,11 @@ function fresh() {
   roots.push(root);
   return new DealMemory(new FileDriver(root));
 }
-function t(name, fn){ fn(); passed++; console.log(`  ok  ${name}`); }
+async function t(name, fn){ await fn(); passed++; console.log(`  ok  ${name}`); }
 
 // --- driver ----------------------------------------------------------------
 
-t('record names survive characters that are illegal in filenames', ()=>{
+await t('record names survive characters that are illegal in filenames', async ()=>{
   // Attestation names are `<deal_id>:<kind>` and ':' is illegal on Windows.
   for(const n of ['dt-1-ab:delivery', 'a/b', '..', 'C:\\x', 'q?*<>|"', 'plain-name']){
     assert.strictEqual(decodeName(encodeName(n)), n, n);
@@ -36,13 +36,13 @@ t('record names survive characters that are illegal in filenames', ()=>{
   }
 });
 
-t('distinct names never collide onto one file', ()=>{
+await t('distinct names never collide onto one file', async ()=>{
   const names = ['a:b', 'a%3Ab', 'a/b', 'a%2Fb'];
   const encoded = names.map(encodeName);
   assert.strictEqual(new Set(encoded).size, names.length);
 });
 
-t('driver round-trips, lists and removes', ()=>{
+await t('driver round-trips, lists and removes', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-drv-'));
   roots.push(root);
   const d = new FileDriver(root);
@@ -56,7 +56,7 @@ t('driver round-trips, lists and removes', ()=>{
   assert.strictEqual(d.remove('c', 'n1'), false);
 });
 
-t('corrupt bytes surface as corruption, not as absence', ()=>{
+await t('corrupt bytes surface as corruption, not as absence', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-drv-'));
   roots.push(root);
   const d = new FileDriver(root);
@@ -66,7 +66,7 @@ t('corrupt bytes surface as corruption, not as absence', ()=>{
   assert.throws(()=>d.read('c', 'n'), /corrupt record/);
 });
 
-t('writes leave no temp files behind', ()=>{
+await t('writes leave no temp files behind', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-drv-'));
   roots.push(root);
   const d = new FileDriver(root);
@@ -77,137 +77,137 @@ t('writes leave no temp files behind', ()=>{
 
 // --- opening a deal --------------------------------------------------------
 
-t('open writes deal + witness and commits to terms', ()=>{
+await t('open writes deal + witness and commits to terms', async ()=>{
   const m = fresh();
-  const deal = m.open({ role: 'buyer', terms: TERMS });
+  const deal = await m.open({ role: 'buyer', terms: TERMS });
   assert.strictEqual(deal.state, 'INTENT');
   assert.match(deal.deal_id, /^dt-\d+-[0-9a-f]{4}$/);
   assert.match(deal.disclosure.merkle_root, /^[0-9a-f]{64}$/);
 
-  const w = m.getWitness(deal.deal_id);
+  const w = await m.getWitness(deal.deal_id);
   assert.strictEqual(w.root, deal.disclosure.merkle_root);
   assert.strictEqual(w.fields.length, Object.keys(TERMS).length);
 });
 
-t('the committed root opens with the stored witness', ()=>{
+await t('the committed root opens with the stored witness', async ()=>{
   const m = fresh();
-  const deal = m.open({ role: 'buyer', terms: TERMS });
-  const w = m.getWitness(deal.deal_id);
+  const deal = await m.open({ role: 'buyer', terms: TERMS });
+  const w = await m.getWitness(deal.deal_id);
   // Rebuild a disclosure from the witness alone, as a later session would.
   const commitment = { v:1, root: w.root, fields: w.fields, proofs: null };
   assert.ok(commitment.root === deal.disclosure.merkle_root);
   assert.strictEqual(w.fields.find(f=>f.key==='price_cap_usdc').value, 0.25);
 });
 
-t('the deal record carries no nonces', ()=>{
+await t('the deal record carries no nonces', async ()=>{
   const m = fresh();
-  const deal = m.open({ role: 'buyer', terms: TERMS });
+  const deal = await m.open({ role: 'buyer', terms: TERMS });
   const wire = JSON.stringify(deal);
-  for(const f of m.getWitness(deal.deal_id).fields){
+  for(const f of (await m.getWitness(deal.deal_id)).fields){
     assert.ok(!wire.includes(f.nonce), `nonce for ${f.key} leaked into the shareable deal record`);
   }
 });
 
-t('opening the same deal id twice is refused', ()=>{
+await t('opening the same deal id twice is refused', async ()=>{
   const m = fresh();
   const id = newDealId();
-  m.open({ dealId: id, role: 'buyer', terms: TERMS });
-  assert.throws(()=>m.open({ dealId: id, role: 'buyer', terms: TERMS }), /already exists/);
+  await m.open({ dealId: id, role: 'buyer', terms: TERMS });
+  await assert.rejects(async ()=>await m.open({ dealId: id, role: 'buyer', terms: TERMS }), /already exists/);
 });
 
 // --- transitions enforce write-before-act ----------------------------------
 
-const walk = (m, id) => {
-  m.transition(id, 'QUOTED');
-  m.transition(id, 'AUTHORIZED', { authorization: { payer: '0xPAYER', authorized_at: new Date().toISOString() } });
-  m.transition(id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
-  m.transition(id, 'PAID', { payment: { fingerprint: 'a'.repeat(64), tx_hash: '0x' + 'b'.repeat(64) } });
-  m.transition(id, 'DELIVERED', { delivery: { payload_sha256: 'c'.repeat(64) } });
+const walk = async (m, id) => {
+  await m.transition(id, 'QUOTED');
+  await m.transition(id, 'AUTHORIZED', { authorization: { payer: '0xPAYER', authorized_at: new Date().toISOString() } });
+  await m.transition(id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
+  await m.transition(id, 'PAID', { payment: { fingerprint: 'a'.repeat(64), tx_hash: '0x' + 'b'.repeat(64) } });
+  await m.transition(id, 'DELIVERED', { delivery: { payload_sha256: 'c'.repeat(64) } });
   return m.transition(id, 'CLOSED');
 };
 
-t('the full happy path walks INTENT to CLOSED', ()=>{
+await t('the full happy path walks INTENT to CLOSED', async ()=>{
   const m = fresh();
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-  const closed = walk(m, deal_id);
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+  const closed = await walk(m, deal_id);
   assert.strictEqual(closed.state, 'CLOSED');
   assert.deepStrictEqual(closed.transitions.map(t=>t.to),
     ['INTENT','QUOTED','AUTHORIZED','IN_FLIGHT','PAID','DELIVERED','CLOSED']);
 });
 
-t('a state cannot be entered without its evidence', ()=>{
+await t('a state cannot be entered without its evidence', async ()=>{
   const m = fresh();
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-  m.transition(deal_id, 'QUOTED');
-  assert.throws(()=>m.transition(deal_id, 'AUTHORIZED'), /requires authorization\.payer/);
-  m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
-  assert.throws(()=>m.transition(deal_id, 'IN_FLIGHT'), /requires payment\.fingerprint/);
-  m.transition(deal_id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
-  assert.throws(()=>m.transition(deal_id, 'PAID'), /requires payment\.tx_hash/);
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+  await m.transition(deal_id, 'QUOTED');
+  await assert.rejects(async ()=>await m.transition(deal_id, 'AUTHORIZED'), /requires authorization\.payer/);
+  await m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
+  await assert.rejects(async ()=>await m.transition(deal_id, 'IN_FLIGHT'), /requires payment\.fingerprint/);
+  await m.transition(deal_id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
+  await assert.rejects(async ()=>await m.transition(deal_id, 'PAID'), /requires payment\.tx_hash/);
 });
 
-t('illegal transitions are refused, including skipping IN_FLIGHT', ()=>{
+await t('illegal transitions are refused, including skipping IN_FLIGHT', async ()=>{
   const m = fresh();
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-  assert.throws(()=>m.transition(deal_id, 'PAID', { payment: { tx_hash: '0x'+'b'.repeat(64) } }),
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+  await assert.rejects(async ()=>await m.transition(deal_id, 'PAID', { payment: { tx_hash: '0x'+'b'.repeat(64) } }),
     /INTENT -> PAID is not a legal transition/);
-  m.transition(deal_id, 'QUOTED');
-  m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
-  assert.throws(()=>m.transition(deal_id, 'PAID', { payment: { tx_hash: '0x'+'b'.repeat(64) } }),
+  await m.transition(deal_id, 'QUOTED');
+  await m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
+  await assert.rejects(async ()=>await m.transition(deal_id, 'PAID', { payment: { tx_hash: '0x'+'b'.repeat(64) } }),
     /AUTHORIZED -> PAID is not a legal transition/);
 });
 
-t('terms are immutable once open', ()=>{
+await t('terms are immutable once open', async ()=>{
   const m = fresh();
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-  assert.throws(()=>m.transition(deal_id, 'QUOTED', { terms: { ...TERMS, price_cap_usdc: 99 } }),
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+  await assert.rejects(async ()=>await m.transition(deal_id, 'QUOTED', { terms: { ...TERMS, price_cap_usdc: 99 } }),
     /terms are immutable/);
-  assert.throws(()=>m.transition(deal_id, 'QUOTED', { terms_hash: 'x'.repeat(64) }),
+  await assert.rejects(async ()=>await m.transition(deal_id, 'QUOTED', { terms_hash: 'x'.repeat(64) }),
     /terms are immutable/);
 });
 
-t('CLOSED and DISPUTED are terminal', ()=>{
+await t('CLOSED and DISPUTED are terminal', async ()=>{
   const m = fresh();
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-  walk(m, deal_id);
-  assert.throws(()=>m.transition(deal_id, 'DISPUTED', { dispute: { evidence: {} } }), /not a legal transition/);
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+  await walk(m, deal_id);
+  await assert.rejects(async ()=>await m.transition(deal_id, 'DISPUTED', { dispute: { evidence: {} } }), /not a legal transition/);
 });
 
-t('DISPUTED requires evidence and is reachable from any live state', ()=>{
+await t('DISPUTED requires evidence and is reachable from any live state', async ()=>{
   for(const stop of ['INTENT','QUOTED','AUTHORIZED']){
     const m = fresh();
-    const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
-    if(stop !== 'INTENT') m.transition(deal_id, 'QUOTED');
-    if(stop === 'AUTHORIZED') m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
-    assert.throws(()=>m.transition(deal_id, 'DISPUTED'), /requires dispute\.evidence/);
-    const d = m.transition(deal_id, 'DISPUTED', { dispute: { evidence: { why: 'test' } } });
+    const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
+    if(stop !== 'INTENT') await m.transition(deal_id, 'QUOTED');
+    if(stop === 'AUTHORIZED') await m.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
+    await assert.rejects(async ()=>await m.transition(deal_id, 'DISPUTED'), /requires dispute\.evidence/);
+    const d = await m.transition(deal_id, 'DISPUTED', { dispute: { evidence: { why: 'test' } } });
     assert.strictEqual(d.state, 'DISPUTED');
   }
 });
 
-t('transition on a missing record refuses', ()=>{
+await t('transition on a missing record refuses', async ()=>{
   const m = fresh();
-  assert.throws(()=>m.transition('dt-0-0000', 'QUOTED'), /no deal record.*REFUSAL/);
+  await assert.rejects(async ()=>await m.transition('dt-0-0000', 'QUOTED'), /no deal record.*REFUSAL/);
 });
 
 // --- replay guard ----------------------------------------------------------
 
-t('a fingerprint can only be claimed once, and survives a new process view', ()=>{
+await t('a fingerprint can only be claimed once, and survives a new process view', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-fp-'));
   roots.push(root);
   const m1 = new DealMemory(new FileDriver(root));
   const fp = paymentFingerprint({ resource: 'https://x/y', nonce: '0xabc', amount: '250000', payTo: '0xSeller' });
-  assert.strictEqual(m1.claimFingerprint(fp, 'deal-1'), true);
-  assert.strictEqual(m1.claimFingerprint(fp, 'deal-1'), false);
+  assert.strictEqual(await m1.claimFingerprint(fp, 'deal-1'), true);
+  assert.strictEqual(await m1.claimFingerprint(fp, 'deal-1'), false);
 
   // Cold start: a brand-new instance over the same store still sees it.
   // acquisition-agent's in-memory Map lost this on restart; that is the gap.
   const m2 = new DealMemory(new FileDriver(root));
-  assert.strictEqual(m2.isConsumed(fp), true);
-  assert.strictEqual(m2.claimFingerprint(fp, 'deal-1'), false);
+  assert.strictEqual(await m2.isConsumed(fp), true);
+  assert.strictEqual(await m2.claimFingerprint(fp, 'deal-1'), false);
 });
 
-t('fingerprints are deterministic and input-sensitive', ()=>{
+await t('fingerprints are deterministic and input-sensitive', async ()=>{
   const base = { resource: 'https://x/y', nonce: '0xabc', amount: '250000', payTo: '0xSeller' };
   const fp = paymentFingerprint(base);
   assert.strictEqual(fp, paymentFingerprint({ ...base }));
@@ -215,51 +215,51 @@ t('fingerprints are deterministic and input-sensitive', ()=>{
   assert.notStrictEqual(fp, paymentFingerprint({ ...base, payTo: '0xAttacker' }));
 });
 
-t('malformed fingerprints are refused', ()=>{
+await t('malformed fingerprints are refused', async ()=>{
   const m = fresh();
-  assert.throws(()=>m.claimFingerprint('short', 'd'), /32 bytes of hex/);
+  await assert.rejects(async ()=>await m.claimFingerprint('short', 'd'), /32 bytes of hex/);
 });
 
 // --- cold start ------------------------------------------------------------
 
-t('a cold instance resumes mid-deal from the store alone', ()=>{
+await t('a cold instance resumes mid-deal from the store alone', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-cold-'));
   roots.push(root);
   const m1 = new DealMemory(new FileDriver(root));
-  const { deal_id } = m1.open({ role: 'buyer', terms: TERMS });
-  m1.transition(deal_id, 'QUOTED');
-  m1.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
-  m1.transition(deal_id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
+  const { deal_id } = await m1.open({ role: 'buyer', terms: TERMS });
+  await m1.transition(deal_id, 'QUOTED');
+  await m1.transition(deal_id, 'AUTHORIZED', { authorization: { payer: '0xP' } });
+  await m1.transition(deal_id, 'IN_FLIGHT', { payment: { fingerprint: 'a'.repeat(64) } });
   // process dies here
 
   const m2 = new DealMemory(new FileDriver(root));
-  const deal = m2.get(deal_id);
-  const verdict = assessDeal({ deal, attestations: m2.getAttestations(deal_id) });
+  const deal = await m2.get(deal_id);
+  const verdict = assessDeal({ deal, attestations: await m2.getAttestations(deal_id) });
   assert.strictEqual(verdict.verdict, VERDICT.RESUME, verdict.reason);
   assert.strictEqual(verdict.from, 'IN_FLIGHT');
   assert.strictEqual(verdict.action, 'reconcile-onchain');
 });
 
-t('deleted memory produces REFUSAL, not a fresh deal', ()=>{
+await t('deleted memory produces REFUSAL, not a fresh deal', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-del-'));
   const m1 = new DealMemory(new FileDriver(root));
-  const { deal_id } = m1.open({ role: 'buyer', terms: TERMS });
-  m1.transition(deal_id, 'QUOTED');
+  const { deal_id } = await m1.open({ role: 'buyer', terms: TERMS });
+  await m1.transition(deal_id, 'QUOTED');
 
   new FileDriver(root).destroyAll();   // the deletion test, for real
 
   const m2 = new DealMemory(new FileDriver(root));
-  assert.strictEqual(m2.get(deal_id), null);
-  const v = assessDeal({ deal: m2.get(deal_id) });
+  assert.strictEqual(await m2.get(deal_id), null);
+  const v = assessDeal({ deal: await m2.get(deal_id) });
   assert.strictEqual(v.verdict, VERDICT.REFUSAL);
   assert.strictEqual(v.action, 'none');
 });
 
-t('a tampered stored record refuses on wake', ()=>{
+await t('a tampered stored record refuses on wake', async ()=>{
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-tamper-'));
   roots.push(root);
   const m = new DealMemory(new FileDriver(root));
-  const { deal_id } = m.open({ role: 'buyer', terms: TERMS });
+  const { deal_id } = await m.open({ role: 'buyer', terms: TERMS });
   // Attacker edits the price in the stored record but cannot recompute the hash
   // without also being able to rewrite every later attestation bound to it.
   const f = path.join(root, CAT.DEAL, deal_id + '.json');
@@ -267,7 +267,7 @@ t('a tampered stored record refuses on wake', ()=>{
   rec.body.terms.price_cap_usdc = 99;
   fs.writeFileSync(f, JSON.stringify(rec));
 
-  const v = assessDeal({ deal: m.get(deal_id) });
+  const v = assessDeal({ deal: await m.get(deal_id) });
   assert.strictEqual(v.verdict, VERDICT.REFUSAL);
   assert.match(v.reason, /terms_hash does not recompute/);
 });

@@ -15,3 +15,7 @@ airtight/data/
 
 .DS_Store
 Thumbs.db
+
+# python venv for sibyl-memory-cli
+.venv/
+__pycache__/

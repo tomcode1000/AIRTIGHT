@@ -58,7 +58,7 @@ for (const boundary of BOUNDARIES) {
   // Respawn cold. New process, no shared state — only what reached the store.
   const second = await run(store, ledger, dealId);
   const lines = ledgerLines(ledger);
-  const deal = new DealMemory(new FileDriver(store)).get(dealId);
+  const deal = await new DealMemory(new FileDriver(store)).get(dealId);
 
   const problems = [];
   if (!first.killed) problems.push(`never reached ${boundary}`);
