@@ -175,6 +175,22 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// A stale seller holding the port is easy to cause and hard to spot: the buyer
+// happily talks to the OLD process, against a different store, while this one
+// dies in a stack trace. Say so plainly instead.
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`\nPort ${PORT} is already in use — another seller is still running.`);
+    console.error(`A buyer would talk to THAT one, not this configuration.\n`);
+    console.error(`  find it : netstat -ano | grep ":${PORT}"      (lsof -i :${PORT} on macOS/Linux)`);
+    console.error(`  stop it : taskkill //PID <pid> //F            (kill <pid> elsewhere)`);
+    console.error(`  or run  : node seller/server.mjs ${PORT + 1}\n`);
+    process.exit(1);
+  }
+  console.error('seller failed:', e.message);
+  process.exit(1);
+});
+
 server.listen(PORT, () => {
   log(`AIRTIGHT seller on http://localhost:${PORT}${RESOURCE_PATH}`);
   log(`  network ${process.env.X402_NETWORK || 'base-sepolia'} · mode ${process.env.PAYMENT_MODE || 'live'} · payTo ${process.env.X402_PAY_TO || '(UNSET — challenge unusable)'}`);
