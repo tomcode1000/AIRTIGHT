@@ -12,6 +12,7 @@
     "test:sibyl": "node test/sibyl.test.mjs",
     "seller": "node seller/server.mjs",
     "buyer": "node buyer/agent.mjs",
-    "burner": "node scripts/new-burner.mjs"
+    "burner": "node scripts/new-burner.mjs",
+    "onchain": "node scripts/onchain.mjs"
   }
 }
