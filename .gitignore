@@ -19,3 +19,4 @@ Thumbs.db
 # python venv for sibyl-memory-cli
 .venv/
 __pycache__/
+.airtight-seller/
