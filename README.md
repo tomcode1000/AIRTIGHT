@@ -100,14 +100,83 @@ indistinguishable from our own memory being corrupted, so it fails closed. If
 unverifiable state escalated to DISPUTED, anyone who could corrupt our memory
 could manufacture disputes against honest sellers.
 
+## Real settlement, verified on-chain
+
+Base Sepolia, live — tx
+[`0x47f84e28…dd0221`](https://sepolia.basescan.org/tx/0x47f84e28df3686e27620ddac3ec1d2bccfc84bbe0dfb37938d8186ac24dd0221):
+
+```
+$ npm run onchain deal-live-1
+tx status    : SUCCESS   block 46418924
+transfer     : 0x2f2ffb…30b1cf → 0x1957a9…12e341  0.01 USDC
+agreed terms : recipient ✓  amount ✓
+gas paid by  : 0xd407e4…e7f1bf  (facilitator — the buyer holds no ETH)
+nonce stored : 0x9c7f38e25b964a4da6fabdb0297b37b427bd7c3674caf274f9d097b3b041e62e
+nonce burned : 0x9c7f38e25b964a4da6fabdb0297b37b427bd7c3674caf274f9d097b3b041e62e
+MATCH        : YES — this payment can never be repeated
+```
+
+The last two lines are the argument in full. The EIP-3009 nonce AIRTIGHT wrote
+to memory **before** paying is exactly the nonce the USDC contract burned. That
+nonce is the only thing making the payment unrepeatable, so a woken agent must
+re-submit the authorisation it stored rather than sign a fresh one. Delete the
+memory layer and there is nothing to re-submit — the only remaining options are
+to double-pay or to never retry.
+
+## Setup
+
+Requires Node 22+. Python 3.10+ only if you want the Sibyl substrate.
+
+```bash
+git clone <repo> && cd airtight/airtight
+npm test                    # no install step — zero runtime dependencies
+```
+
+The test suite runs everything, including a real 402 exchange over HTTP against
+a locally spawned seller. No keys, funds, or network access are needed: the
+facilitator is mocked, nothing else is.
+
+**To run against Sibyl Memory** (the real substrate):
+
+```bash
+python -m venv ../.venv
+../.venv/Scripts/pip install 'sibyl-memory-cli[mcp]'   # .venv/bin/pip on Linux/macOS
+../.venv/Scripts/sibyl init                            # browser sign-in
+npm run test:sibyl
+```
+
+**To run a live deal on Base Sepolia:**
+
+```bash
+npm run burner >> ../.env        # generates throwaway wallets, prints the address to fund
+# fund the printed buyer address with Base Sepolia USDC (faucet.circle.com)
+# USDC only — no ETH; the facilitator pays gas
+
+set -a; source ../.env; set +a
+unset PAYMENT_MODE               # mock off
+
+node seller/server.mjs 4021                                   # terminal 1
+node buyer/agent.mjs http://localhost:4021/report/42 deal-1   # terminal 2
+npm run onchain deal-1                                        # verify against the chain
+```
+
+Then inspect what the agent remembers:
+
+```bash
+node cli.mjs ls
+node cli.mjs recall deal-1
+```
+
+`AIRTIGHT_MEMORY=file` selects the local test driver; the default is Sibyl.
+
 ## Status
 
-Working and tested: deal memory, state machine, crash-safe driver, resume
-assessment, selective disclosure, notarisation, SIGKILL chaos suite.
+Working and tested: the Sibyl Memory driver, deal memory and state machine, the
+crash-safe local driver, resume assessment, selective disclosure, notarisation,
+a live x402 buyer and seller, and two SIGKILL suites — one over a mock ledger,
+one over the real protocol.
 
-Not yet done: binding to the Sibyl Memory CLI (the driver seam exists,
-`driver-file.mjs` is the local substrate), live x402 USDC settlement on Base
-Sepolia, the seller agent, and the replay UI.
+Not yet done: the replay UI.
 
 ## Prior work
 
