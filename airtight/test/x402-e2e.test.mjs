@@ -31,6 +31,16 @@ const BUYER_KEY = '0x' + '11'.repeat(32);
 const PAY_TO = deriveAddress('0x' + '22'.repeat(32));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-x402-'));
 
+// This suite deliberately pays TWICE, to show what signing a fresh nonce costs.
+// Harmless against a mock facilitator, real money against a live one — so it
+// defaults to mock and refuses only when live was explicitly asked for. A
+// silent skip during `npm test` would be worse than either.
+if (process.env.PAYMENT_MODE === undefined) process.env.PAYMENT_MODE = 'x402-mock';
+if (process.env.PAYMENT_MODE !== 'x402-mock') {
+  console.log(`SKIP x402-e2e.test — PAYMENT_MODE=${process.env.PAYMENT_MODE} would spend real USDC (this suite double-pays on purpose)`);
+  process.exit(0);
+}
+
 let passed = 0;
 async function t(name, fn) { await fn(); passed++; console.log(`  ok  ${name}`); }
 

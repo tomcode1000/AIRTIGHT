@@ -30,7 +30,8 @@ console.log(`# --- AIRTIGHT demo burners (testnet only) ---
 X402_NETWORK=base-sepolia
 PAYMENT_MODE=x402-mock          # flip to x402-live for the real settle
 
-# Buyer — needs Base Sepolia USDC + a little ETH for nothing (facilitator pays gas)
+# Buyer — needs Base Sepolia USDC ONLY. No ETH: the buyer signs an EIP-3009
+# authorisation offline and never broadcasts; the facilitator submits and pays gas.
 DEMO_BUYER_KEY=${buyer.key}
 DEMO_BUYER_ADDRESS=${buyer.address}
 
@@ -43,10 +44,11 @@ X402_FACILITATOR_URL=https://x402.org/facilitator
 `);
 
 console.error(`
-Fund the buyer with Base Sepolia USDC:
+Fund the buyer with Base Sepolia USDC — USDC only, no ETH needed:
   address : ${buyer.address}
   token   : 0x036CbD53842c5426634e7929541eC2318f3dCF7e  (USDC, base-sepolia)
   faucet  : https://faucet.circle.com  (select Base Sepolia)
 
-The seller needs no funds — it only receives.
+The seller needs no funds - it only receives.
+At X402_PRICE_USDC=0.01 a deal costs one cent, so 10 USDC is ~1000 takes.
 `);
