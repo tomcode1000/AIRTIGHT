@@ -104,6 +104,67 @@ export class FileDriver {
     catch (e) { if (e.code === 'ENOENT') return false; throw e; }
   }
 
+  /* ── HOT tier ────────────────────────────────────────────────────────
+   * Mirrors Sibyl's set_state/get_state: one file per key, overwritten,
+   * same crash-safe write as everything else here. */
+
+  #stateFile(key) { return path.join(this.root, '_state', encodeName(key) + '.json'); }
+
+  setState(key, body) {
+    const dir = path.join(this.root, '_state');
+    fs.mkdirSync(dir, { recursive: true });
+    const target = this.#stateFile(key);
+    const tmp = target + '.' + process.pid + '.tmp';
+    const fd = fs.openSync(tmp, 'w');
+    try {
+      fs.writeFileSync(fd, JSON.stringify({ key, body, updated_at: new Date().toISOString() }, null, 2), 'utf8');
+      fs.fsyncSync(fd);
+    } finally { fs.closeSync(fd); }
+    fs.renameSync(tmp, target);
+    this.#fsyncDir(dir);
+    return true;
+  }
+
+  getState(key) {
+    try {
+      const rec = JSON.parse(fs.readFileSync(this.#stateFile(key), 'utf8'));
+      return rec?.body ?? null;
+    } catch (e) {
+      if (e.code === 'ENOENT') return null;
+      if (e instanceof SyntaxError) throw new Error(`corrupt state ${key}: ${e.message}`);
+      throw e;
+    }
+  }
+
+  removeState(key) {
+    try { fs.unlinkSync(this.#stateFile(key)); return true; }
+    catch (e) { if (e.code === 'ENOENT') return false; throw e; }
+  }
+
+  listState() {
+    try {
+      return fs.readdirSync(path.join(this.root, '_state'))
+        .filter(f => f.endsWith('.json')).map(f => decodeName(f.slice(0, -5))).sort();
+    } catch (e) { if (e.code === 'ENOENT') return []; throw e; }
+  }
+
+  /* ── COLD tier: append-only journal ─────────────────────────────────── */
+
+  recordEvent(kind, body, { category = null, name = null } = {}) {
+    const dir = path.join(this.root, '_journal');
+    fs.mkdirSync(dir, { recursive: true });
+    const line = JSON.stringify({ kind, body, category, name, at: new Date().toISOString() }) + '\n';
+    fs.appendFileSync(path.join(dir, encodeName(kind) + '.jsonl'), line, 'utf8');
+    return true;
+  }
+
+  readEvents(kind) {
+    try {
+      return fs.readFileSync(path.join(this.root, '_journal', encodeName(kind) + '.jsonl'), 'utf8')
+        .split('\n').filter(Boolean).map(l => JSON.parse(l));
+    } catch (e) { if (e.code === 'ENOENT') return []; throw e; }
+  }
+
   /** Irreversible. Used by the deletion test, which must wipe for real. */
   destroyAll() { fs.rmSync(this.root, { recursive: true, force: true }); }
 }

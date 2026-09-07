@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { FileDriver } from '../memory/driver-file.mjs';
 import { DealMemory, CAT } from '../memory/deals.mjs';
-import { TaskMemory, TASK_CAT, newTaskId, memoryPressure } from '../tasks/checkpoint.mjs';
+import { TaskMemory, TASK_KEY, TASK_EVENT, newTaskId, memoryPressure } from '../tasks/checkpoint.mjs';
 import { checkpointIfPressured } from '../tasks/guard.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -131,10 +131,12 @@ await t('tasks and payments never see each other, even on one driver', async () 
              asset: '0xB', price_cap_usdc: 0.01, max_amount_required: '10000' },
   });
 
-  // Same name, different categories: neither record is disturbed.
+  // Same name, different TIERS: the task lives in HOT state, the deal in an
+  // entity category. Neither record can reach the other.
   assert.strictEqual((await tasks.get('shared-name')).label, 'a task');
   assert.strictEqual((await deals.get('shared-name')).role, 'buyer');
-  assert.deepStrictEqual(await driver.list(TASK_CAT), ['shared-name']);
+  assert.deepStrictEqual(await tasks.list(), ['shared-name']);
+  assert.ok(driver.listState().includes(TASK_KEY('shared-name')));
   assert.deepStrictEqual(await driver.list(CAT.DEAL), ['shared-name']);
 
   // Deleting every task leaves the payment record untouched.
@@ -143,14 +145,60 @@ await t('tasks and payments never see each other, even on one driver', async () 
   assert.ok(await deals.get('shared-name'), 'a payment record must survive a task wipe');
 });
 
-await t('the task module writes only its own category', async () => {
+await t('the task module writes only state and journal, never an entity', async () => {
   const root = store();
   const mem = new TaskMemory(new FileDriver(root));
   await mem.start('t', { steps: 2 });
   await mem.checkpoint('t', 0);
+  await mem.advance('t', { action: 'called the pricing API', result: { cursor: 'p2' } });
   await mem.done('t');
-  const cats = fs.readdirSync(root);
-  assert.deepStrictEqual(cats, [TASK_CAT], `wrote outside its category: ${cats}`);
+  const dirs = fs.readdirSync(root).sort();
+  assert.deepStrictEqual(dirs, ['_journal', '_state'], `wrote outside its tiers: ${dirs}`);
+});
+
+await t('advance records WHAT was done, for agents with no fixed plan', async () => {
+  // A pipeline can say "step 5 of 9" because the code defines step 6. A ReAct
+  // loop cannot — "5 actions done" says nothing about which. The journal is
+  // what lets a resuming agent read its own history instead of guessing.
+  const mem = fresh();
+  await mem.start('agent', { steps: null });          // plan unknown
+  await mem.advance('agent', { action: 'searched the catalogue', result: { hits: 12 } });
+  await mem.advance('agent', { action: 'emailed the supplier', result: { id: 'msg-8812' } });
+
+  const r = await mem.resume('agent');
+  assert.strictEqual(r.step, 1);
+  assert.strictEqual(r.resumeFrom, 2);
+  assert.strictEqual(r.record.total_steps, null, 'an emergent task has no total');
+  assert.strictEqual(r.record.meta.last_action, 'emailed the supplier');
+
+  const h = await mem.history('agent');
+  assert.deepStrictEqual(h.map(e => e.action),
+    ['searched the catalogue', 'emailed the supplier']);
+  assert.strictEqual(h[1].result.id, 'msg-8812', 'the result must survive for the next run');
+});
+
+await t('history is per task, not global', async () => {
+  const root = store();
+  const mem = new TaskMemory(new FileDriver(root));
+  await mem.start('a'); await mem.start('b');
+  await mem.advance('a', { action: 'a-one' });
+  await mem.advance('b', { action: 'b-one' });
+  assert.deepStrictEqual((await mem.history('a')).map(e => e.action), ['a-one']);
+  assert.deepStrictEqual((await mem.history('b')).map(e => e.action), ['b-one']);
+});
+
+await t('a driver with no journal still checkpoints safely', async () => {
+  // The position is what makes recovery correct; the journal only enriches it.
+  const bare = {
+    _s: new Map(),
+    setState(k, v) { this._s.set(k, v); return true; },
+    getState(k) { return this._s.get(k) ?? null; },
+  };
+  const mem = new TaskMemory(bare);
+  await mem.start('t');
+  await mem.advance('t', { action: 'did a thing' });
+  assert.strictEqual((await mem.resume('t')).resumeFrom, 1);
+  assert.deepStrictEqual(await mem.history('t'), []);
 });
 
 // ── crash capture, against a real process ──────────────────────────────────
@@ -237,6 +285,46 @@ await t('memory pressure is a fraction, and the guard respects its threshold', a
   assert.strictEqual(await checkpointIfPressured(mem, 't', 0, { threshold: 1.1 }), false);
   assert.strictEqual(await checkpointIfPressured(mem, 't', 0, { threshold: 0 }), true);
   assert.match((await mem.get('t')).reason, /memory_pressure:/);
+});
+
+await t('tasks can be enumerated on a driver that cannot walk keys', async () => {
+  // Sibyl's HOT tier has set_state/get_state and no key listing at all, so the
+  // index is the only way to answer "what tasks exist" there.
+  const bare = {
+    _s: new Map(),
+    setState(k, v) { this._s.set(k, v); return true; },
+    getState(k) { return this._s.get(k) ?? null; },
+  };
+  const mem = new TaskMemory(bare);
+  await mem.start('one'); await mem.start('two');
+  assert.deepStrictEqual(await mem.list(), ['one', 'two']);
+  await mem.forget('one');
+  assert.deepStrictEqual(await mem.list(), ['two']);
+  assert.strictEqual(await mem.get('one'), null, 'a forgotten task must not resume');
+});
+
+await t('a forgotten task stays forgotten where state cannot be deleted', async () => {
+  // Sibyl's HOT tier has no delete, so forget() overwrites with a marker. It
+  // must not be `null`: the server coerces primitives to {value: null}, which
+  // is truthy, and the task would read as alive with an empty record.
+  const bare = {
+    _s: new Map(),
+    setState(k, v) { this._s.set(k, v); return true; },
+    getState(k) { return this._s.get(k) ?? null; },
+  };
+  const mem = new TaskMemory(bare);
+  await mem.start('gone', { steps: 3 });
+  await mem.checkpoint('gone', 1);
+  await mem.forget('gone');
+
+  assert.strictEqual(await mem.get('gone'), null);
+  assert.deepStrictEqual(await mem.resume('gone'),
+    { found: false, state: null, step: 0, resumeFrom: 0, reason: null, record: null });
+
+  // and starting again is a genuine fresh run, not a resurrection
+  const again = await mem.start('gone', { steps: 3 });
+  assert.strictEqual(again.state, 'STARTED');
+  assert.strictEqual(again.step, 0);
 });
 
 await t('task ids are unique and shaped', async () => {

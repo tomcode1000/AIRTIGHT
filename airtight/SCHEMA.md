@@ -6,12 +6,12 @@ that makes recovery possible BEFORE taking the risk.
 | Module | Categories | Missing record means |
 |---|---|---|
 | **Payment Safety** | `airtight-deal` · `airtight-fp` · `airtight-witness` · `airtight-att` | **REFUSAL** — never "start over", because starting over is how you pay twice |
-| **Task Checkpointing** | `airtight-task` | **start from zero** — slow, not dangerous |
+| **Task Checkpointing** | HOT state `airtight:task:*` · journal `airtight-task` | **start from zero** — slow, not dangerous |
 
-Isolation is by Sibyl *category*, not by a prefix inside a shared name. Category
-is the substrate's own boundary, so a key built wrong cannot silently address
-the other module's records. Neither module reads or writes the other's
-categories; removing one leaves the other intact.
+The two modules use **different Sibyl tiers**, which is a stronger boundary than
+a naming convention: Payment Safety writes entity records, Task Checkpointing
+writes HOT state and COLD journal events. Neither can address the other's
+storage even by building a key wrong.
 
 ---
 
@@ -159,9 +159,21 @@ For work that is safe to repeat but expensive to repeat. Anything irreversible
 belongs behind Payment Safety instead: a task with no record resumes from zero
 by design, and that is the wrong answer for money.
 
-### Task record
-- **category:** `airtight-task`
-- **name:** `<task_id>` — caller-chosen, or `tk-<unix_ts>-<4 hex>`
+Sibyl has three tiers and this module uses two of them for what they are for:
+
+| Tier | Call | Holds |
+|---|---|---|
+| **HOT** | `set_state` / `get_state` | the task's **position** — one row per task, overwritten |
+| **COLD** | `record_event` | **what was done** — append-only, for agents with no fixed plan |
+
+Sibyl provides those places. What this module adds is the discipline that makes
+a crash survivable: the position is written before the next risky step, a
+checkpoint may not rewind, a finished task refuses further writes, `start()` is
+idempotent, and `resume()` turns a stored position into the next thing to do.
+The same relationship a write-ahead log has to `fwrite`.
+
+### Task position — HOT tier
+- **key:** `airtight:task:<task_id>`
 - **body** (dict):
 
 ```
@@ -209,3 +221,38 @@ no handler runs. Exceptions and unhandled rejections are still captured.
 This is why the checkpoint goes *before* the step and the hooks are only an
 annotation. The hooks also re-raise what they caught — a handler that recorded
 and swallowed would turn every crash into a clean exit 0.
+
+
+### Task history — COLD tier
+- **kind:** `airtight-task`
+- **body:** `{task_id, step, action, result, at}`
+- Appended by `advance()`, one event per completed action.
+
+For a pipeline, "step 5 of 9 done" is enough — the code defines step 6. For an
+emergent agent (a ReAct loop deciding its next action from the last result),
+"5 actions done" says nothing about *which*, so the position alone cannot tell
+it what to skip. The journal is what lets such an agent read its own history
+rather than infer it.
+
+### Task index — HOT tier
+- **key:** `airtight:task:index`
+- **body:** `{v: 1, ids: [...]}`
+- Sibyl's HOT tier exposes `set_state` and `get_state` and no key listing, so
+  without an index a caller can read any single task but never ask what tasks
+  exist. Written on `start()`, including for a task that already exists, so a
+  record created before the index was introduced repairs itself.
+
+### Deletion
+`forget()` removes the state row where the driver can (`FileDriver`), and
+overwrites it with `{v: 1, deleted: true}` where it cannot (Sibyl has no
+delete-state call). The marker must not be `null`: the server coerces a
+primitive body into `{value: <primitive>}`, so a null tombstone returns a
+truthy object and the task reads as alive with an empty record.
+
+## Two things Sibyl cannot do for you
+
+1. **Order.** Nothing in the API knows that a write should precede an action.
+   That rule lives here, and it is the only reason a SIGKILL is survivable.
+2. **Refusal.** `get_state` returning nothing is just an absent row. Deciding
+   that absence must mean *stop* rather than *start over* is a policy, and for
+   money it is the difference between safe and paying twice.

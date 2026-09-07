@@ -28,6 +28,6 @@
 
 export * from './payments.mjs';
 export {
-  TaskMemory, TASK_CAT, TASK_STATES, newTaskId, memoryPressure,
+  TaskMemory, TASK_KEY, TASK_EVENT, TASK_INDEX, TASK_CAT, TASK_STATES, newTaskId, memoryPressure,
   installCrashHooks, checkpointIfPressured,
 } from './tasks/index.mjs';

@@ -152,6 +152,43 @@ export class SibylDriver {
     return (r.results ?? []).map(e => e.name).sort();
   }
 
+  /* ── HOT tier: one row per key, overwritten ──────────────────────────
+   * Sibyl's own description: "ephemeral working state the agent updates
+   * frequently - current focus, in-flight task list". Faster than an entity
+   * write, and the right home for a position that changes every step. */
+
+  async setState(key, body) {
+    const r = await this.#call('memory_set_state', { key, body });
+    if (r === SibylDriver.NOT_FOUND || !r?.ok) {
+      throw new Error(`sibyl setState failed: ${JSON.stringify(r).slice(0, 200)}`);
+    }
+    return true;
+  }
+
+  async getState(key) {
+    const r = await this.#call('memory_get_state', { key });
+    // get_state reports a miss in-band as {ok:false, code:'NOT_FOUND'} rather
+    // than raising, so absence has to be recognised here too.
+    if (r === SibylDriver.NOT_FOUND) return null;
+    if (r?.ok === false) {
+      if (r.code === 'NOT_FOUND') return null;
+      throw new Error(`sibyl getState: ${r.code ?? 'ERROR'}`);
+    }
+    return r?.body ?? null;
+  }
+
+  /* ── COLD tier: append-only journal ──────────────────────────────────
+   * What was done, in order. Distinct from state: state is where we are,
+   * the journal is what happened. An emergent agent needs both. */
+
+  async recordEvent(kind, body, { category = null, name = null } = {}) {
+    const args = { kind, body };
+    if (category) args.category = category;
+    if (name) args.name = name;
+    const r = await this.#call('memory_record_event', args);
+    return r !== SibylDriver.NOT_FOUND && !!r?.ok;
+  }
+
   /**
    * Archive, not erase. `memory_forget` is a soft delete by design, so this
    * cannot stand in for the deletion test — see `destroyAll`.

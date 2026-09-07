@@ -24,7 +24,7 @@
  * irreversible — money, an email, a delete — belongs behind Payment Safety
  * instead, because a task with no record resumes from zero by design.
  */
-export { TaskMemory, TASK_CAT, TASK_STATES, newTaskId, memoryPressure } from './checkpoint.mjs';
+export { TaskMemory, TASK_KEY, TASK_EVENT, TASK_INDEX, TASK_CAT, TASK_STATES, newTaskId, memoryPressure } from './checkpoint.mjs';
 export { installCrashHooks, checkpointIfPressured } from './guard.mjs';
 
 // The storage drivers are shared with Payment Safety; the categories keep the

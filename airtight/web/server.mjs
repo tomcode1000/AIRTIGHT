@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { SibylDriver } from '../memory/driver-sibyl.mjs';
 import { FileDriver } from '../memory/driver-file.mjs';
 import { DealMemory, CAT } from '../memory/deals.mjs';
-import { TaskMemory, TASK_CAT } from '../tasks/checkpoint.mjs';
+import { TaskMemory } from '../tasks/checkpoint.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -179,7 +179,7 @@ async function snapshot() {
   try {
     const [deals, fps, wits, atts, tasks] = await Promise.all([
       driver.list(CAT.DEAL), driver.list(CAT.FP), driver.list(CAT.WITNESS),
-      driver.list(CAT.ATT), driver.list(TASK_CAT),
+      driver.list(CAT.ATT), (new TaskMemory(driver)).list(),
     ]);
     out.memory = {
       deal: deals.length, fp: fps.length, witness: wits.length, att: atts.length,
@@ -306,8 +306,13 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/task/start' && req.method === 'POST') {
     const body = await readBody(req);
     if (task.child) return json(res, 409, { ok: false, error: 'the task is already running' });
-    if (body.fresh) { task.log = []; task.restarts = 0; send('tclear', {}); }
-    else task.restarts++;
+    if (body.fresh) {
+      // A finished task must not be "resumed" into completion again — a fresh
+      // run means step 0, so the old record is cleared first.
+      task.log = []; task.restarts = 0; send('tclear', {});
+      const d = newDriver();
+      try { await (new TaskMemory(d)).forget(task.id); } finally { d.close?.(); }
+    } else task.restarts++;
     if (Number.isInteger(body.holdAt)) task.holdAt = body.holdAt;
     const r = runTask({ hold: body.hold === false ? null : task.holdAt });
     pushState();
