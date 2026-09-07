@@ -1,0 +1,436 @@
+<title>AIRTIGHT Task Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --ground:#0A1119; --surface:#111C28; --card:#16222F; --card-hd:#1A2836; --inset:#0C1620;
+    --line:#2A3B4D; --line-soft:#1F2E3D;
+    --text:#E9EDF1; --muted:#94A3B4; --faint:#5D6E80;
+    --link:#539FE5; --accent:#FF9900; --go:#3FBF7F; --hold:#E8A33D; --stop:#E05252;
+    --go-dim:rgba(63,191,127,.12); --hold-dim:rgba(232,163,61,.12);
+    --stop-dim:rgba(224,82,82,.12); --link-dim:rgba(83,159,229,.12);
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --r:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ::selection{background:var(--link);color:#08131D}
+  a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+  .bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--line-soft)}
+  .brand{font-weight:600;font-size:14px;letter-spacing:.14em;display:flex;align-items:center;gap:9px}
+  .brand i{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:none}
+  .brand span{font-weight:400;color:var(--muted);font-size:12px;letter-spacing:.08em}
+  .bar .right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-family:var(--mono);font-size:10.5px;padding:4px 10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .pill.go{color:var(--go);border-color:rgba(63,191,127,.45);background:var(--go-dim)}
+  .pill.hold{color:var(--hold);border-color:rgba(232,163,61,.45);background:var(--hold-dim)}
+  .pill.stop{color:var(--stop);border-color:rgba(224,82,82,.45);background:var(--stop-dim)}
+  .pill.link{color:var(--link);border-color:rgba(83,159,229,.45);background:var(--link-dim)}
+
+  .btn{font-family:var(--sans);font-size:12.5px;font-weight:500;padding:8px 16px;border-radius:999px;cursor:pointer;border:1px solid var(--link);background:transparent;color:var(--link);display:inline-flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;transition:background .12s,color .12s}
+  .btn:hover:not(:disabled){background:var(--link-dim)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#10202D;font-weight:600}
+  .btn.primary:hover:not(:disabled){background:#FFAD2E}
+  .btn.danger{border-color:var(--stop);color:var(--stop)}
+  .btn.danger:hover:not(:disabled){background:var(--stop);color:#1A0808}
+  .btn.warn{border-color:var(--hold);color:var(--hold)}
+  .btn.warn:hover:not(:disabled){background:var(--hold);color:#1C1305}
+  .btn.wide{width:100%}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn .sub{font-family:var(--mono);font-size:10.5px;opacity:.7;font-weight:400}
+
+  .room{display:grid;grid-template-columns:minmax(250px,.88fr) minmax(340px,1.3fr) minmax(260px,.95fr);gap:12px;padding:12px 18px;max-width:1760px;margin:0 auto;width:100%}
+  .col{display:grid;gap:12px;align-content:start;min-height:0}
+  @media (min-width:1180px) and (min-height:660px){
+    html{height:100%}
+    body{height:100%;overflow:hidden;display:flex;flex-direction:column}
+    .bar{flex:none}
+    .room{flex:1;min-height:0}
+    .col{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+    .col::-webkit-scrollbar{width:7px}
+    .col::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  }
+
+  .card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .card > header{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--card-hd);border-bottom:1px solid var(--line-soft)}
+  .card > header h2{margin:0;font-size:14.5px;font-weight:600}
+  .card > header .hr{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .card > .body{padding:12px 14px}
+  .card.warn{border-color:rgba(232,163,61,.45)}
+  .card.warn > header{background:rgba(232,163,61,.1)}
+  .card.warn > header h2{color:var(--hold)}
+
+  .row{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .row:last-child{border-bottom:0}
+  .row .k{font-size:12px;color:var(--muted)}
+  .row .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .row .v.go{color:var(--go)}.row .v.hold{color:var(--hold)}.row .v.faint{color:var(--faint)}
+
+  /* progress: the claim of this page is "resumed at N, not 0" */
+  .prog{border:1px solid rgba(63,191,127,.45);border-radius:var(--r);background:var(--go-dim);padding:14px 16px;display:grid;gap:10px}
+  .prog .top{display:flex;align-items:baseline;gap:14px}
+  .prog .big{font-family:var(--mono);font-size:46px;line-height:.9;color:var(--go);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+  .prog .of{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .prog .side{margin-left:auto;text-align:right}
+  .prog .side b{display:block;font-size:12.5px;font-weight:600}
+  .prog .side span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .track{display:flex;gap:3px}
+  .track i{flex:1;height:6px;border-radius:2px;background:var(--line)}
+  .track i.done{background:var(--go)}
+  .track i.now{background:var(--hold)}
+  .track i.skip{background:var(--link)}
+
+  .step{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .step:last-child{border-bottom:0}
+  .step .d{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--faint);justify-self:center}
+  .step.done .d{background:var(--go);border-color:var(--go)}
+  .step.skip .d{background:var(--link);border-color:var(--link)}
+  .step.now .d{border-color:var(--hold);box-shadow:0 0 0 3px var(--hold-dim)}
+  .step .n{font-family:var(--mono);font-size:12.5px;color:var(--faint)}
+  .step.done .n,.step.skip .n,.step.now .n{color:var(--text)}
+  .step .tag{font-family:var(--mono);font-size:10px;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .step.done .tag{color:var(--go);border:1px solid rgba(63,191,127,.35);background:var(--go-dim)}
+  .step.skip .tag{color:var(--link);border:1px solid rgba(83,159,229,.35);background:var(--link-dim)}
+  .step.now .tag{color:var(--hold);border:1px solid rgba(232,163,61,.35);background:var(--hold-dim)}
+  .killrow{margin:7px 0;padding:9px 12px;border-radius:6px;background:var(--stop-dim);border:1px solid rgba(224,82,82,.42);font-family:var(--mono);font-size:11.5px;color:var(--stop)}
+
+  .log{background:var(--inset);padding:11px 14px;display:grid;gap:5px;align-content:start;min-height:120px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .log::-webkit-scrollbar{width:7px}
+  .log::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .l{display:grid;grid-template-columns:54px 1fr;gap:9px;align-items:baseline}
+  .l time{font-family:var(--mono);font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .l span{font-family:var(--mono);font-size:12px;color:#A7B6C6;overflow-wrap:anywhere}
+  .l.good span{color:var(--go)}
+  .l.resume span{color:var(--link)}
+  .l.held span{color:var(--stop)}
+  .l.dead span{color:var(--faint)}
+  .l.refusal span{color:var(--hold)}
+  .l.err span{color:var(--stop)}
+
+  .cat{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .cat:last-child{border-bottom:0}
+  .cat .nm{font-family:var(--mono);font-size:12.5px}
+  .cat .ds{font-size:11px;color:var(--muted);grid-column:1}
+  .cat .ct{font-family:var(--mono);font-size:20px;grid-row:1/3;align-self:center;font-variant-numeric:tabular-nums;color:var(--go)}
+  .cat.other .ct{color:var(--faint)}
+  .cat.other .nm{color:var(--muted)}
+
+  .note{font-size:12px;line-height:1.5;color:var(--muted);padding:11px 14px;background:var(--inset);border-top:1px solid var(--line-soft)}
+  .note b{color:var(--go);font-weight:600}
+  .note.warn b{color:var(--hold)}
+
+  .field{display:grid;gap:5px;margin-top:10px}
+  .field label{font-size:12px;color:var(--muted)}
+  select{font-family:var(--sans);font-size:12.5px;color:var(--text);background:var(--inset);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;width:100%}
+
+  .banner{display:none;padding:9px 18px;font-size:12.5px;background:var(--hold-dim);border-bottom:1px solid rgba(232,163,61,.4);color:var(--hold)}
+  .banner.on{display:block}
+  .banner b{font-weight:600}
+
+  @media (max-width:1180px){.room{grid-template-columns:1fr 1fr}.col:nth-child(3){grid-column:1/-1}}
+  @media (max-width:760px){.room{grid-template-columns:1fr;padding-inline:12px}.col:nth-child(3){grid-column:auto}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="bar">
+  <div class="brand"><i></i>AIRTIGHT <span>Task Room</span></div>
+  <div class="right">
+    <span class="pill link"><i></i>task checkpointing</span>
+    <span class="pill" id="memPill"><i></i>memory</span>
+    <span class="pill" id="statusPill"><i></i>idle</span>
+    <a href="/room">Deal Room</a>
+    <a href="/overview">Overview</a>
+  </div>
+</div>
+
+<div class="banner" id="banner">
+  <b>Preview.</b> This hosted copy cannot reach a local agent, so it shows a run that was
+  killed at step 4 and resumed. Run <span style="font-family:var(--mono)">node web/server.mjs</span>
+  and open <span style="font-family:var(--mono)">localhost:4300/tasks</span> for the live controls.
+</div>
+
+<div class="room">
+
+  <!-- ══ 1 · the job ═════════════════════════════════════════════ -->
+  <div class="col">
+    <section class="card">
+      <header>
+        <h2>Task</h2>
+        <div class="hr"><span class="pill" id="taskPill"><i></i>idle</span></div>
+      </header>
+      <div class="body">
+        <div class="row"><span class="k">Task id</span><span class="v" id="taskId">nightly-import</span></div>
+        <div class="row"><span class="k">State</span><span class="v" id="taskState">—</span></div>
+        <div class="row"><span class="k">Last stop</span><span class="v faint" id="taskReason">—</span></div>
+        <div class="row"><span class="k">Restarts</span><span class="v" id="restarts">0</span></div>
+
+        <div class="field">
+          <label for="holdAt">Hold at step</label>
+          <select id="holdAt">
+            <option value="1">1 · download records</option>
+            <option value="2">2 · normalise field names</option>
+            <option value="4" selected>4 · enrich from third-party API</option>
+            <option value="6">6 · build search index</option>
+            <option value="">don't hold — run to completion</option>
+          </select>
+        </div>
+
+        <div style="display:grid;gap:7px;margin-top:11px">
+          <button class="btn primary wide" id="bStart">Run task <span class="sub">9 steps</span></button>
+          <button class="btn danger wide" id="bKill" disabled>Kill process <span class="sub">SIGKILL</span></button>
+          <button class="btn wide" id="bResume" disabled>Restart <span class="sub">reads memory</span></button>
+        </div>
+      </div>
+      <div class="note">
+        Progress is written <b>after each step completes, before the next begins</b>.
+        A crash anywhere in step N still leaves N−1 recorded.
+      </div>
+    </section>
+
+    <section class="card warn">
+      <header><h2>Without memory</h2></header>
+      <div class="body">
+        <div class="row"><span class="k">On delete</span><span class="v hold">restarts from step 0</span></div>
+        <div style="margin-top:11px">
+          <button class="btn warn wide" id="bWipe">Delete task memory <span class="sub">task record only</span></button>
+        </div>
+      </div>
+      <div class="note warn">
+        Unlike payments, a missing task record is <b>slow, not dangerous</b> — the work is
+        safe to repeat. That is the whole difference between the two modules.
+      </div>
+    </section>
+  </div>
+
+  <!-- ══ 2 · the steps ═══════════════════════════════════════════ -->
+  <div class="col">
+    <section class="card">
+      <header>
+        <h2>Steps</h2>
+        <div class="hr"><span class="pill" id="stepPill"><i></i>—</span></div>
+      </header>
+      <div class="body" id="steps"></div>
+      <div class="note">
+        Blue steps were <b>skipped on resume</b> — already recorded as complete, so the
+        restarted process never ran them again.
+      </div>
+    </section>
+
+    <section class="card" style="flex:1;min-height:170px">
+      <header><h2>Worker output</h2><div class="hr"><span class="pill" id="streamPill"><i></i>waiting</span></div></header>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <!-- ══ 3 · the evidence ════════════════════════════════════════ -->
+  <div class="col">
+    <div class="prog">
+      <div class="top">
+        <span class="big" id="resumeFrom">0</span>
+        <span class="of">of 9 steps</span>
+        <span class="side"><b id="progLabel">not started</b><span id="progSub">nothing recorded yet</span></span>
+      </div>
+      <div class="track" id="track"></div>
+    </div>
+
+    <section class="card">
+      <header><h2>Task record</h2><div class="hr"><span class="pill" id="recPill"><i></i>airtight-task</span></div></header>
+      <div class="body">
+        <div class="row"><span class="k">state</span><span class="v" id="rState">—</span></div>
+        <div class="row"><span class="k">step</span><span class="v go" id="rStep">—</span></div>
+        <div class="row"><span class="k">total_steps</span><span class="v" id="rTotal">—</span></div>
+        <div class="row"><span class="k">reason</span><span class="v faint" id="rReason">—</span></div>
+        <div class="row"><span class="k">last_checkpoint_at</span><span class="v faint" id="rAt">—</span></div>
+      </div>
+      <div class="note">
+        One record per task, <b>overwritten</b> not appended — a checkpoint is a position,
+        and a history would grow without bound on a long job.
+      </div>
+    </section>
+
+    <section class="card">
+      <header><h2>Sibyl Memory</h2><div class="hr"><span class="pill" id="isoPill"><i></i>isolated</span></div></header>
+      <div class="body">
+        <div class="cat" id="c-task"><span class="nm">airtight-task</span><span class="ct">0</span><span class="ds">This module</span></div>
+        <div class="cat other" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Payment Safety — untouched</span></div>
+        <div class="cat other" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Payment Safety — untouched</span></div>
+      </div>
+      <div class="note">
+        Deleting task memory leaves every payment category <b>exactly as it was</b>.
+        Isolation is by category, so a key built wrong cannot reach the other module.
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const STEPS = [
+    'fetch source manifest', 'download 1,842 records', 'normalise field names',
+    'deduplicate against existing', 'enrich from third-party API', 'validate against schema',
+    'build search index', 'write output shard', 'publish manifest',
+  ];
+  let live = false, killedAt = null, skipTo = 0;
+
+  const pill = (el, cls, text) => { el.className = 'pill ' + cls; el.innerHTML = '<i></i>' + text; };
+
+  function renderSteps(rec, status){
+    const done = rec ? rec.step : -1;
+    const state = rec?.state;
+    const running = status === 'running' || status === 'held';
+    const current = running ? done + 1 : null;
+
+    let html = '';
+    for (let i = 0; i < STEPS.length; i++){
+      let cls = '', tag = '';
+      if (i < skipTo && i <= done)      { cls = 'skip'; tag = 'skipped on resume'; }
+      else if (i <= done)               { cls = 'done'; tag = 'written'; }
+      else if (i === current)           { cls = 'now';  tag = 'running'; }
+      html += `<div class="step ${cls}"><i class="d"></i><span class="n">${i} &nbsp;${STEPS[i]}</span>`
+           +  `${tag ? `<span class="tag">${tag}</span>` : '<span></span>'}</div>`;
+      if (killedAt === i) html += `<div class="killrow">killed here — step ${i} never finished</div>`;
+    }
+    $('steps').innerHTML = html;
+
+    $('track').innerHTML = STEPS.map((_, i) => {
+      const c = i < skipTo && i <= done ? 'skip' : i <= done ? 'done' : i === current ? 'now' : '';
+      return `<i class="${c}"></i>`;
+    }).join('');
+
+    pill($('stepPill'), state === 'DONE' ? 'go' : running ? 'hold' : '',
+         rec ? `step ${Math.max(done, 0)} of ${STEPS.length}` : '—');
+  }
+
+  function render(s){
+    const t = s.task || {};
+    const rec = t.record;
+    $('taskId').textContent   = t.id || 'nightly-import';
+    $('restarts').textContent = t.restarts ?? 0;
+    $('taskState').textContent= rec?.state ?? 'no record';
+    $('taskReason').textContent = rec?.reason ?? '—';
+
+    $('rState').textContent  = rec?.state ?? '—';
+    $('rStep').textContent   = rec ? rec.step : '—';
+    $('rTotal').textContent  = rec?.total_steps ?? '—';
+    $('rReason').textContent = rec?.reason ?? 'routine';
+    $('rAt').textContent     = rec?.last_checkpoint_at ? String(rec.last_checkpoint_at).slice(11,19) : '—';
+
+    $('resumeFrom').textContent = t.resumeFrom ?? 0;
+    const complete = rec?.state === 'DONE';
+    $('progLabel').textContent = complete ? 'complete' : rec ? 'resumes here' : 'not started';
+    $('progSub').textContent   = complete ? 'all 9 steps written'
+                               : rec ? `${rec.step + 1} step${rec.step === 0 ? '' : 's'} already recorded`
+                               : 'nothing recorded yet';
+
+    const m = s.memory || {};
+    for (const [k, id, ds] of [['task','c-task'],['deal','c-deal'],['fp','c-fp']]){
+      $(id).querySelector('.ct').textContent = m[k] ?? 0;
+    }
+    pill($('memPill'), m.task ? 'go' : 'hold', m.task ? 'task recorded' : 'no task record');
+    pill($('isoPill'), 'link', `${(m.deal||0)+(m.fp||0)} payment records`);
+
+    renderSteps(rec, t.status);
+    renderStatus(t.status);
+  }
+
+  function renderStatus(st){
+    const map = { idle:['','Idle'], running:['go','Running'], held:['stop','Held — kill it'],
+                  killed:['stop','Killed'], done:['go','Complete'], failed:['hold','Failed'] };
+    const [cls,label] = map[st] || ['','—'];
+    pill($('statusPill'), cls, label);
+    pill($('taskPill'), cls, label);
+    if (!live) return;
+    $('bStart').disabled  = st === 'running' || st === 'held';
+    $('bKill').disabled   = !(st === 'running' || st === 'held');
+    $('bResume').disabled = !(st === 'killed' || st === 'failed');
+  }
+
+  function addLine(e){
+    const box = $('log');
+    const d = document.createElement('div');
+    d.className = 'l ' + (e.kind || 'out');
+    d.innerHTML = `<time>${e.t}</time><span></span>`;
+    d.querySelector('span').textContent = e.text;
+    box.appendChild(d); box.scrollTop = box.scrollHeight;
+    const m = /RESUMED at step (\d+)/.exec(e.text);
+    if (m) skipTo = Number(m[1]);
+  }
+
+  async function post(path, body){
+    const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+    const j = await r.json().catch(()=>({}));
+    if (!j.ok && j.error) addLine({t:new Date().toTimeString().slice(0,8), text:j.error, kind:'err'});
+    return j;
+  }
+
+  function connect(){
+    const es = new EventSource('/api/events');
+    es.onopen  = () => pill($('streamPill'),'go','connected');
+    es.onerror = () => pill($('streamPill'),'hold','reconnecting');
+    es.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (m.type === 'tlog')    addLine(m);
+      if (m.type === 'tstatus') renderStatus(m.status);
+      if (m.type === 'state')   render(m.state);
+      if (m.type === 'tclear'){ $('log').innerHTML = ''; killedAt = null; skipTo = 0; }
+    };
+  }
+
+  const holdValue = () => { const v = $('holdAt').value; return v === '' ? null : Number(v); };
+
+  async function boot(){
+    try{
+      const r = await fetch('/api/state');
+      if (!r.ok) throw new Error('no api');
+      live = true;
+      render(await r.json());
+      connect();
+
+      $('bStart').onclick = () => { skipTo = 0; killedAt = null; return post('/api/task/start', { fresh: true, holdAt: holdValue(), hold: holdValue() !== null }); };
+      $('bKill').onclick  = () => { killedAt = holdValue(); return post('/api/task/kill'); };
+      $('bResume').onclick= () => post('/api/task/start', { hold: false });
+      $('bWipe').onclick  = async () => { await post('/api/task/wipe'); skipTo = 0; killedAt = null; render(await (await fetch('/api/state')).json()); };
+    }catch{
+      // Hosted preview: seed a run that was killed at step 4 and resumed.
+      $('banner').classList.add('on');
+      for (const b of ['bStart','bKill','bResume','bWipe']) $(b).disabled = true;
+      pill($('streamPill'), '', 'preview');
+      killedAt = 4; skipTo = 4;
+      render({
+        memory: { task: 1, deal: 1, fp: 1 },
+        task: {
+          id: 'nightly-import', status: 'done', restarts: 1, resumeFrom: 9,
+          record: { state:'DONE', step:8, total_steps:9, reason:null, last_checkpoint_at:'2026-09-07T15:12:41.220Z' },
+        },
+      });
+      for (const [t,text,kind] of [
+        ['15:11:58','START nightly-import · 9 steps','out'],
+        ['15:11:58','STEP 0 fetch source manifest','out'],
+        ['15:12:00','WROTE step 0 complete','good'],
+        ['15:12:00','STEP 1 download 1,842 records','out'],
+        ['15:12:01','WROTE step 1 complete','good'],
+        ['15:12:01','STEP 2 normalise field names','out'],
+        ['15:12:03','WROTE step 2 complete','good'],
+        ['15:12:03','STEP 3 deduplicate against existing','out'],
+        ['15:12:04','WROTE step 3 complete','good'],
+        ['15:12:04','STEP 4 enrich from third-party API','out'],
+        ['15:12:09','──── process killed ────','dead'],
+        ['15:12:22','RESUMED at step 4 of 9 · last stop: signal_SIGTERM','resume'],
+        ['15:12:22','SKIPPED 4 steps already done','resume'],
+        ['15:12:31','WROTE step 8 complete','good'],
+        ['15:12:41','DONE nightly-import','good'],
+      ]) addLine({t,text,kind});
+    }
+  }
+  boot();
+})();
+</script>

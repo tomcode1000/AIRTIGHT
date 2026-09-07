@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { SibylDriver } from '../memory/driver-sibyl.mjs';
 import { FileDriver } from '../memory/driver-file.mjs';
 import { DealMemory, CAT } from '../memory/deals.mjs';
+import { TaskMemory, TASK_CAT } from '../tasks/checkpoint.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -47,6 +48,17 @@ const state = {
   lastExit: null,
 };
 
+// Task Checkpointing runs alongside Payment Safety and shares nothing with it
+// but the driver. Separate process, separate log, separate category.
+const task = {
+  id: 'nightly-import',
+  child: null,
+  status: 'idle',        // idle | running | held | killed | done | failed
+  log: [],
+  holdAt: 4,
+  restarts: 0,
+};
+
 const clients = new Set();
 const send = (type, data) => {
   const line = `data: ${JSON.stringify({ type, ...data })}\n\n`;
@@ -59,6 +71,52 @@ const log = (text, kind = 'out') => {
   send('log', entry);
 };
 const setAgent = a => { state.agent = a; send('agent', { agent: a }); };
+
+const tlog = (text, kind = 'out') => {
+  const entry = { t: new Date().toISOString().slice(11, 19), text, kind };
+  task.log.push(entry);
+  if (task.log.length > 400) task.log.shift();
+  send('tlog', entry);
+};
+const setTask = s => { task.status = s; send('tstatus', { status: s }); };
+
+function runTask({ hold = null } = {}) {
+  if (task.child) return { ok: false, error: 'the task is already running' };
+  const env = { ...process.env, AIRTIGHT_STEP_MS: process.env.AIRTIGHT_STEP_MS || '1400' };
+  const argv = [path.join(ROOT, 'tasks', 'demo-worker.mjs'), task.id];
+  if (Number.isInteger(hold)) argv.push('--hold', String(hold));
+
+  const child = spawn(process.execPath, argv, { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  task.child = child;
+  setTask('running');
+
+  const kindOf = l =>
+    l.startsWith('WROTE') ? 'good'
+    : l.startsWith('RESUMED') || l.startsWith('SKIPPED') ? 'resume'
+    : l.startsWith('HOLD') ? 'held'
+    : l.startsWith('DONE') ? 'good'
+    : 'out';
+
+  const onData = d => {
+    for (const raw of d.toString().split('\n')) {
+      const line = raw.trimEnd();
+      if (!line) continue;
+      if (line.startsWith('HOLD')) setTask('held');
+      tlog(line, kindOf(line));
+    }
+  };
+  child.stdout.on('data', onData);
+  child.stderr.on('data', d => onData(d));
+
+  child.on('close', (code, signal) => {
+    task.child = null;
+    if (signal === 'SIGKILL' || signal === 'SIGTERM') { setTask('killed'); tlog('──── process killed ────', 'dead'); }
+    else if (code === 0) setTask('done');
+    else { setTask('failed'); tlog(`exited ${code}`, 'err'); }
+    pushState();
+  });
+  return { ok: true, pid: child.pid };
+}
 
 /* ── spawn the real buyer ────────────────────────────────────────────── */
 function runBuyer({ hold = null, resumeOnly = false } = {}) {
@@ -114,17 +172,25 @@ async function snapshot() {
   const out = {
     dealId: state.dealId, agent: state.agent, killAt: state.killAt,
     settlements: state.settlements, resource: RESOURCE, db: DB,
-    memory: { deal: 0, fp: 0, witness: 0, att: 0, total: 0 },
+    memory: { deal: 0, fp: 0, witness: 0, att: 0, task: 0, total: 0 },
     deal: null, buyer: null,
+    task: { id: task.id, status: task.status, holdAt: task.holdAt, restarts: task.restarts, record: null, resumeFrom: 0 },
   };
   try {
-    const [deals, fps, wits, atts] = await Promise.all([
-      driver.list(CAT.DEAL), driver.list(CAT.FP), driver.list(CAT.WITNESS), driver.list(CAT.ATT),
+    const [deals, fps, wits, atts, tasks] = await Promise.all([
+      driver.list(CAT.DEAL), driver.list(CAT.FP), driver.list(CAT.WITNESS),
+      driver.list(CAT.ATT), driver.list(TASK_CAT),
     ]);
     out.memory = {
       deal: deals.length, fp: fps.length, witness: wits.length, att: atts.length,
+      task: tasks.length,
       total: deals.length + fps.length + wits.length + atts.length,
     };
+
+    const tmem = new TaskMemory(driver);
+    const r = await tmem.resume(task.id);
+    out.task.record = r.record;
+    out.task.resumeFrom = r.resumeFrom;
     if (state.dealId) {
       const d = await mem.get(state.dealId);
       if (d) {
@@ -178,11 +244,13 @@ const server = http.createServer(async (req, res) => {
   // can call the API, and the overview's links stay local instead of bouncing
   // out to the hosted preview.
   const page = p === '/' || p === '/room' ? 'deal-room.html'
+             : p === '/tasks' ? 'task-room.html'
              : p === '/overview' || p === '/index.html' ? 'index.html'
              : null;
   if (page) {
     let html = fs.readFileSync(path.join(HERE, page), 'utf8');
     html = html.replace(/https:\/\/claude\.ai\/code\/artifact\/66be152e-6dbd-41cd-b120-3208e4370c65/g, '/room')
+               .replace(/https:\/\/claude\.ai\/code\/artifact\/9fb4b586-f957-4331-90fe-c4cae3448623/g, '/tasks')
                .replace(/https:\/\/claude\.ai\/code\/artifact\/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4/g, '/overview');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
@@ -195,7 +263,9 @@ const server = http.createServer(async (req, res) => {
     res.write('retry: 2000\n\n');
     clients.add(res);
     for (const e of state.log.slice(-60)) res.write(`data: ${JSON.stringify({ type: 'log', ...e })}\n\n`);
+    for (const e of task.log.slice(-60)) res.write(`data: ${JSON.stringify({ type: 'tlog', ...e })}\n\n`);
     send('agent', { agent: state.agent });
+    send('tstatus', { status: task.status });
     pushState();
     req.on('close', () => clients.delete(res));
     return;
@@ -231,6 +301,39 @@ const server = http.createServer(async (req, res) => {
     const r = runBuyer({ hold: null, resumeOnly: true });
     pushState();
     return json(res, r.ok ? 200 : 400, r);
+  }
+
+  if (p === '/api/task/start' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (task.child) return json(res, 409, { ok: false, error: 'the task is already running' });
+    if (body.fresh) { task.log = []; task.restarts = 0; send('tclear', {}); }
+    else task.restarts++;
+    if (Number.isInteger(body.holdAt)) task.holdAt = body.holdAt;
+    const r = runTask({ hold: body.hold === false ? null : task.holdAt });
+    pushState();
+    return json(res, r.ok ? 200 : 400, r);
+  }
+
+  if (p === '/api/task/kill' && req.method === 'POST') {
+    if (!task.child) return json(res, 409, { ok: false, error: 'the task is not running' });
+    const pid = task.child.pid;
+    task.child.kill('SIGKILL');
+    return json(res, 200, { ok: true, pid });
+  }
+
+  if (p === '/api/task/wipe' && req.method === 'POST') {
+    // Deletes ONLY the task record. Payment records are a different category
+    // and must be untouched — the page shows both counts to prove it.
+    if (task.child) task.child.kill('SIGKILL');
+    const driver = newDriver();
+    try {
+      const tmem = new TaskMemory(driver);
+      await tmem.forget(task.id);
+      tlog('task memory deleted — the next run starts from step 0', 'refusal');
+    } finally { driver.close?.(); }
+    task.restarts = 0;
+    await pushState();
+    return json(res, 200, { ok: true });
   }
 
   if (p === '/api/wipe' && req.method === 'POST') {
