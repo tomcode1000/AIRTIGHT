@@ -242,7 +242,7 @@
     </div>
 
     <section class="card">
-      <header><h2>Task record</h2><div class="hr"><span class="pill" id="recPill"><i></i>airtight-task</span></div></header>
+      <header><h2>Task record</h2><div class="hr"><span class="pill" id="recPill"><i></i>HOT state</span></div></header>
       <div class="body">
         <div class="row"><span class="k">state</span><span class="v" id="rState">—</span></div>
         <div class="row"><span class="k">step</span><span class="v go" id="rStep">—</span></div>
@@ -251,21 +251,23 @@
         <div class="row"><span class="k">last_checkpoint_at</span><span class="v faint" id="rAt">—</span></div>
       </div>
       <div class="note">
-        One record per task, <b>overwritten</b> not appended — a checkpoint is a position,
-        and a history would grow without bound on a long job.
+        One row per task, <b>overwritten</b> not appended — a checkpoint is a position.
+        When the plan is not known in advance, <b>advance()</b> also appends the action
+        and its result to the journal, so a resuming agent reads its own history.
       </div>
     </section>
 
     <section class="card">
-      <header><h2>Sibyl Memory</h2><div class="hr"><span class="pill" id="isoPill"><i></i>isolated</span></div></header>
+      <header><h2>Sibyl tiers</h2><div class="hr"><span class="pill" id="isoPill"><i></i>isolated</span></div></header>
       <div class="body">
-        <div class="cat" id="c-task"><span class="nm">airtight-task</span><span class="ct">0</span><span class="ds">This module</span></div>
-        <div class="cat other" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Payment Safety — untouched</span></div>
-        <div class="cat other" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Payment Safety — untouched</span></div>
+        <div class="cat" id="c-task"><span class="nm">airtight:task:*</span><span class="ct">0</span><span class="ds">HOT state — this module's position</span></div>
+        <div class="cat other" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Entity — Payment Safety, untouched</span></div>
+        <div class="cat other" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Entity — Payment Safety, untouched</span></div>
       </div>
       <div class="note">
-        Deleting task memory leaves every payment category <b>exactly as it was</b>.
-        Isolation is by category, so a key built wrong cannot reach the other module.
+        Position lives in Sibyl's <b>HOT state</b> tier, completed actions in the
+        <b>COLD journal</b>. Payment Safety writes entity records and never touches
+        either — different tiers, so neither module can reach the other's storage.
       </div>
     </section>
   </div>
@@ -336,7 +338,7 @@
       $(id).querySelector('.ct').textContent = m[k] ?? 0;
     }
     pill($('memPill'), m.task ? 'go' : 'hold', m.task ? 'task recorded' : 'no task record');
-    pill($('isoPill'), 'link', `${(m.deal||0)+(m.fp||0)} payment records`);
+    pill($('isoPill'), 'link', `${(m.deal||0)+(m.fp||0)} payment records untouched`);
 
     renderSteps(rec, t.status);
     renderStatus(t.status);

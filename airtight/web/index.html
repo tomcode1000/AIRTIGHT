@@ -427,6 +427,12 @@
         Everything else is the same discipline: record what makes recovery possible before
         taking the risk, and never depend on seeing the failure coming.
       </p>
+      <p class="rule" style="margin-top:16px">
+        Sibyl Memory supplies the tiers — durable records for deals, hot state for a
+        position, a journal for what was done. <b>What a storage API cannot supply is the
+        order</b>: that the write comes before the action, that a checkpoint may not
+        rewind, and what a missing record is allowed to mean. That part is the product.
+      </p>
     </section>
   </div>
 

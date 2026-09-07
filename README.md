@@ -29,12 +29,17 @@ both.
 | **Writes before** | the payment is submitted | each risky step begins |
 | **Records** | the signed authorisation + its nonce | the last completed step |
 | **A missing record means** | **REFUSAL** — refuse to act | **start from zero** |
-| **Sibyl categories** | `airtight-deal` `-fp` `-witness` `-att` | `airtight-task` |
+| **Sibyl tier** | entity records — `airtight-deal` `-fp` `-witness` `-att` | HOT state `airtight:task:*` + COLD journal |
 
 Both apply the same rule: **write the thing that makes recovery possible before
 taking the risk, never after.** They share the storage drivers and nothing else
-— separate categories, separate code paths, no cross-reads. Deleting every task
-record leaves payments untouched, and the reverse.
+— **different Sibyl tiers**, separate code paths, no cross-reads. Deleting every
+task record leaves payments untouched, and the reverse.
+
+Sibyl supplies the tiers. What these modules add is the part an API cannot: the
+rule that the write comes *before* the action, the refusal to rewind, and the
+decision about what a missing record means. The same relationship a write-ahead
+log has to `fwrite`.
 
 Which one you need turns on a single question: **is the step reversible?**
 
@@ -128,8 +133,9 @@ this table.
 | **Delivery notarisation** — the seller signs what it delivered, under a domain disjoint from USDC's | `airtight-att` | [notary.mjs](airtight/staging/selective_disclosure/notary.mjs) |
 | **Selective disclosure** — commit to terms, reveal chosen fields with proofs; blinding nonces held apart from the shareable record | `airtight-witness` | [merkle.js](airtight/staging/selective_disclosure/merkle.js) |
 | **Recall surface** — a cold process reading only what reached storage | reads all | [cli.mjs](airtight/cli.mjs) |
-| **Task checkpointing** — progress written before each step; resume instead of restart | `airtight-task` | [tasks/checkpoint.mjs](airtight/tasks/checkpoint.mjs) |
-| **Crash capture** — SIGTERM/SIGINT/exception annotated onto the record, then re-raised | `airtight-task` | [tasks/guard.mjs](airtight/tasks/guard.mjs) |
+| **Task checkpointing** — position written before each step; resume instead of restart | HOT state `airtight:task:*` | [tasks/checkpoint.mjs](airtight/tasks/checkpoint.mjs) |
+| **Action history** — what was done, for agents whose plan is not known in advance | COLD journal `airtight-task` | [tasks/checkpoint.mjs](airtight/tasks/checkpoint.mjs) |
+| **Crash capture** — SIGTERM/SIGINT/exception annotated onto the record, then re-raised | HOT state | [tasks/guard.mjs](airtight/tasks/guard.mjs) |
 
 A live deal writes all four categories:
 
