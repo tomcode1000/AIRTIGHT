@@ -35,6 +35,21 @@ Each subpath pulls in only its own module. Nothing is installed globally and
 nothing runs in the background — it is a library you call, not a daemon that
 watches your agent.
 
+### Teaching an agent when to call it
+
+A library only helps if the agent reaches for it at the right moment, so one
+ships with the package: [`airtight/skill/SKILL.md`](airtight/skill/SKILL.md).
+
+```bash
+cp -r node_modules/airtight/airtight/skill .claude/skills/airtight
+```
+
+Its description is written to fire on the moments that matter — before money
+moves, before a long job starts, and on wake before acting — and the body gives
+the agent the decision rule (*is this step reversible?*), the call order, and
+the mistakes that cost money. Any agent runtime that loads instruction files can
+use it; the format follows the standard skill frontmatter.
+
 ## Two modules, one principle
 
 AIRTIGHT is a layer, not an application. The buyer agent in this repo is the

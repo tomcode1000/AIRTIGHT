@@ -55,7 +55,7 @@
   nav{position:sticky;top:0;z-index:30;background:rgba(10,17,25,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--hair)}
   .nav-in{max-width:var(--maxw);margin:0 auto;padding:13px var(--gut);display:flex;align-items:center;gap:26px}
   .brand{font-weight:600;font-size:15px;letter-spacing:.16em;display:flex;align-items:center;gap:10px;color:var(--text)}
-  .brand i{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:none}
+    .mk{width:20px;height:20px;color:var(--accent);flex:none;display:block}
   .nav-links{margin-left:auto;display:flex;gap:22px;align-items:center}
   .nav-links a{font-size:14px;color:var(--muted);font-weight:400}
   .nav-links a:hover{color:var(--text);text-decoration:none}
@@ -285,7 +285,7 @@
 
 <nav>
   <div class="nav-in">
-    <div class="brand"><i></i>AIRTIGHT</div>
+    <div class="brand"><svg class="mk" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square"><path d="M46 8 H12 a4 4 0 0 0-4 4 v40 a4 4 0 0 0 4 4 h34" opacity=".38"/><path d="M18 32 H30"/><path d="M42 32 H56" opacity=".55"/></g><circle cx="30" cy="32" r="5" fill="currentColor"/><path d="M35 25.5 L35 38.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".45"/></svg>AIRTIGHT</div>
     <div class="nav-links">
       <a href="#mechanism">Mechanism</a>
       <a href="#proof">Proof</a>
@@ -550,6 +550,16 @@
 });<br>
 <span class="b">await</span> <span class="g">submitPayment</span>(url, signed.header);<br><br>
 <span class="c">// killed above? next run re-submits headerFromStored(...) — same nonce.</span>
+      </div>
+
+      <p class="sub" style="margin-top:30px">
+        A library only helps if the agent reaches for it at the right moment, so one
+        ships with the package. Its description fires before money moves, before a long
+        job starts, and on wake before acting — and it hands the agent the decision rule,
+        the call order, and the mistakes that cost money.
+      </p>
+      <div class="code" style="margin-top:18px">
+<span class="c">$</span> cp -r node_modules/airtight/airtight/skill .claude/skills/airtight
       </div>
 
       <div class="guards">
