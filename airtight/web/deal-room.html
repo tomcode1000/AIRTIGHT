@@ -74,13 +74,19 @@
   .row .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .row .v.go{color:var(--go)}.row .v.link{color:var(--link)}.row .v.faint{color:var(--faint)}.row .v.hold{color:var(--hold)}
 
-  .stat{padding:9px 0;border-bottom:1px solid var(--line-soft)}
-  .stat:last-child{border-bottom:0}
-  .stat .l{font-size:12.5px;color:var(--text)}
-  .stat .nr{display:flex;align-items:baseline;gap:12px;justify-content:space-between;margin-top:1px}
-  .stat .n{font-family:var(--mono);font-size:27px;line-height:1.1;font-variant-numeric:tabular-nums}
-  .stat .n.go{color:var(--go)}
-  .stat .r{font-size:11.5px;color:var(--muted)}
+  /* The counter is the claim. It gets to be the biggest thing in the column. */
+  .counter{
+    border:1px solid rgba(63,191,127,.45);border-radius:var(--r);background:var(--go-dim);
+    padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;
+  }
+  .counter .big{
+    font-family:var(--mono);font-size:60px;line-height:.86;color:var(--go);
+    font-variant-numeric:tabular-nums;letter-spacing:-.03em;
+  }
+  .counter .side{display:grid;gap:3px}
+  .counter .side b{font-size:13.5px;font-weight:600;color:var(--text)}
+  .counter .side span{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+  .counter .side em{font-style:normal;font-size:11.5px;color:var(--go);font-family:var(--mono)}
 
   .node{display:grid;grid-template-columns:15px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)}
   .node:last-child{border-bottom:0}
@@ -106,14 +112,21 @@
   .l.meta span{color:var(--muted)}
   .l.err span{color:var(--stop)}
 
-  .sel{padding:12px 14px;display:grid;gap:9px;border-bottom:1px solid var(--line-soft)}
-  .sel .hd{display:flex;align-items:center;gap:9px}
-  .sel .hd .nm{font-size:13.5px;font-weight:600}
-  .sel .hd .pill{margin-left:auto}
-  .sel .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}
-  .sel .meta .k{font-size:11px;color:var(--muted);display:block}
-  .sel .meta .v{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
-  .sel .meta .v.link{color:var(--link)}.sel .meta .v.go{color:var(--go)}
+  /* Buyer -> seller as an edge, so the counterparty reads as the other end of a
+     deal rather than a list of fields. */
+  .edge{padding:14px;display:grid;gap:10px}
+  .end{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center}
+  .end .dot{width:9px;height:9px;border-radius:50%;background:var(--link)}
+  .end.us .dot{background:var(--accent)}
+  .end .who{font-size:13px;font-weight:600}
+  .end .addr{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:block;font-weight:400;margin-top:1px}
+  .wire{
+    display:grid;grid-template-columns:9px 1fr;gap:11px;align-items:center;
+    padding:2px 0;
+  }
+  .wire .ln{justify-self:center;width:1px;height:26px;background:var(--line)}
+  .wire .lbl{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .wire .lbl b{color:var(--go);font-weight:500}
 
   .cat{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft)}
   .cat .nm{font-family:var(--mono);font-size:12.5px}
@@ -197,14 +210,22 @@
 
     <section class="card">
       <header><h2>Seller</h2><div class="hr"><span class="pill" id="sellerPill"><i></i>counterparty</span></div></header>
-      <div class="sel">
-        <div class="hd"><span class="nm">report-42</span><span class="pill go"><i></i>Online</span></div>
-        <div class="meta">
-          <div><span class="k">Endpoint</span><span class="v" id="resource">:4021/report/42</span></div>
-          <div><span class="k">Price</span><span class="v" id="price">0.01 USDC</span></div>
-          <div><span class="k">Pays to</span><span class="v link" id="payto">—</span></div>
-          <div><span class="k">Signs delivery</span><span class="v go" id="attested">—</span></div>
+      <div class="edge">
+        <div class="end us">
+          <i class="dot"></i>
+          <span class="who">This agent<span class="addr" id="payerEdge">—</span></span>
+          <span class="pill" id="buyerEdgePill">buyer</span>
         </div>
+        <div class="wire">
+          <i class="ln"></i>
+          <span class="lbl"><b id="price">0.01 USDC</b> · <span id="resource">:4021/report/42</span></span>
+        </div>
+        <div class="end">
+          <i class="dot"></i>
+          <span class="who">report-42<span class="addr" id="payto">—</span></span>
+          <span class="pill go"><i></i>online</span>
+        </div>
+        <div class="row" style="padding-top:9px"><span class="k">Signs delivery</span><span class="v go" id="attested">—</span></div>
       </div>
       <div class="note">
         An ordinary x402 endpoint. AIRTIGHT protects the buyer <b>without requiring anything
@@ -235,19 +256,14 @@
 
   <!-- ══ 3 · evidence ════════════════════════════════════════════ -->
   <div class="col">
-    <section class="card">
-      <header><h2>Settlement</h2></header>
-      <div class="body">
-        <div class="stat">
-          <div class="l">Payments for this deal</div>
-          <div class="nr"><span class="n go" id="settlements">0</span><span class="r" id="settleNote">no deal yet</span></div>
-        </div>
-        <div class="stat">
-          <div class="l">Double payments</div>
-          <div class="nr"><span class="n" id="doubles">0</span><span class="r">enforced by the chain</span></div>
-        </div>
-      </div>
-    </section>
+    <div class="counter">
+      <span class="big" id="settlements">0</span>
+      <span class="side">
+        <b>settlement</b>
+        <span id="settleNote">no deal yet</span>
+        <em>never two, whenever you kill it</em>
+      </span>
+    </div>
 
     <section class="card">
       <header><h2>On-chain</h2><div class="hr"><span class="pill link" id="txPill"><i></i>pending</span></div></header>
@@ -318,7 +334,9 @@
 
   function renderState(s){
     $('dealRef').textContent = s.dealId ? short(s.dealId, 12, 4) : '—';
-    $('payer').textContent   = s.deal?.payer ? short(s.deal.payer) : '—';
+    const payerShort = s.deal?.payer ? short(s.deal.payer) : '—';
+    $('payer').textContent = payerShort;
+    $('payerEdge').textContent = payerShort;
     $('payto').textContent   = s.deal?.pay_to ? short(s.deal.pay_to) : '—';
     $('price').textContent   = s.deal?.price != null ? s.deal.price + ' USDC' : '0.01 USDC';
     $('resource').textContent= (s.resource||'').replace(/^https?:\/\/localhost/,'');
@@ -329,7 +347,7 @@
     $('payload').textContent = short(s.deal?.payload_sha256, 8, 4);
 
     $('settlements').textContent = s.settlements ?? 0;
-    $('settleNote').textContent  = s.dealId ? (killedAt ? 'killed once, mid-flight' : 'one deal') : 'no deal yet';
+    $('settleNote').textContent  = s.dealId ? (killedAt ? 'killed mid-flight, resumed' : 'for this deal') : 'no deal yet';
 
     const st = s.deal?.state;
     if(st) pill($('statePill'), st==='CLOSED'?'go':st==='DISPUTED'?'stop':'hold', st);
