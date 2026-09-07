@@ -262,6 +262,17 @@ const server = http.createServer(async (req, res) => {
     return res.end(html);
   }
 
+  // The mark, for the demo close card, posts, and anything that wants a file
+  // rather than the inline copy in each page.
+  if (p === '/logo.svg') {
+    try {
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' });
+      return res.end(fs.readFileSync(path.join(HERE, 'logo.svg')));
+    } catch {
+      res.writeHead(404); return res.end();
+    }
+  }
+
   if (p === '/api/events') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive',
