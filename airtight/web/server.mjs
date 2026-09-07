@@ -252,7 +252,13 @@ const server = http.createServer(async (req, res) => {
     html = html.replace(/https:\/\/claude\.ai\/code\/artifact\/66be152e-6dbd-41cd-b120-3208e4370c65/g, '/room')
                .replace(/https:\/\/claude\.ai\/code\/artifact\/9fb4b586-f957-4331-90fe-c4cae3448623/g, '/tasks')
                .replace(/https:\/\/claude\.ai\/code\/artifact\/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4/g, '/overview');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    // Never cache. These pages are edited between takes, and a browser serving
+    // a stale copy during a demo looks exactly like the change was never made.
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      Pragma: 'no-cache',
+    });
     return res.end(html);
   }
 
