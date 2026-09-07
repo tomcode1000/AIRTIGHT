@@ -35,8 +35,11 @@ function dealAt(state, over = {}) {
   return { ...d, ...over };
 }
 
+// The fingerprint is the shared identifier: a counterparty signs over that,
+// never over our local record name, which it has no way to know.
+const FP = 'f'.repeat(64);
 const deliveryAtt = (over = {}) => notarize({
-  privateKey: SELLER_KEY, dealId: 'dt-1693720000-ab12', role: 'seller', kind: 'delivery',
+  privateKey: SELLER_KEY, dealId: FP, role: 'seller', kind: 'delivery',
   termsHash: termsHash(TERMS), merkleRoot: commitment.root,
   payloadHash: payloadHash(CONTENT), chainId: CHAIN, ...over,
 });
@@ -140,13 +143,26 @@ t('attestation signed by the wrong party refuses', ()=>{
   assert.match(r.reason, /binding mismatch: signer/);
 });
 
-t('attestation bound to a different disclosure root refuses', ()=>{
-  const att = deliveryAtt({ merkleRoot: buildCommitment({ other: 1 }).root });
+t('a seller attestation for a different payment refuses', ()=>{
+  // Cross-party bindings are limited to what both sides derive identically.
+  // The seller's own termsHash and merkleRoot are over THEIR record and cannot
+  // be asserted from here; the payment fingerprint can.
+  const att = deliveryAtt({ dealId: 'e'.repeat(64) });
   const r = assessDeal({
     deal: dealAt('DELIVERED'), attestations: { delivery: att },
     delivered: CONTENT, counterparty: SELLER,
   });
-  assert.match(r.reason, /binding mismatch: merkleRoot/);
+  assert.match(r.reason, /binding mismatch: dealId/);
+});
+
+t('a completed deal with a valid seller attestation resumes on wake', ()=>{
+  // The regression that broke the live Deal Room: assessDeal bound the local
+  // deal id, so every wake after a real delivery refused.
+  const r = assessDeal({
+    deal: dealAt('CLOSED'), attestations: { delivery: deliveryAtt() },
+    counterparty: SELLER,
+  });
+  assert.strictEqual(r.verdict, VERDICT.RESUME, r.reason);
 });
 
 t('mismatched bytes with NO attestation refuses (nobody to attribute it to)', ()=>{

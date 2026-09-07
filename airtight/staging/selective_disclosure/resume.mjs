@@ -102,9 +102,28 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
   // Signature failure ⇒ corrupt or forged, indistinguishable ⇒ REFUSAL.
   for (const [kind, att] of Object.entries(attestations)) {
     if (!att) continue;
-    const bindings = { dealId: deal.deal_id ?? att.dealId };
-    if (deal.disclosure?.merkle_root) bindings.merkleRoot = deal.disclosure.merkle_root;
-    if (counterparty && kind === 'delivery') bindings.signer = counterparty;
+
+    // What may be asserted depends on WHO signed it.
+    //
+    // A counterparty's attestation is signed over THEIR record, so their
+    // termsHash and merkleRoot are values we cannot reconstruct and must not
+    // claim to know. The one identifier both sides derive identically is the
+    // payment fingerprint — that is what a cross-party signature binds, and so
+    // it is all we may check, alongside the address we expect to have signed.
+    //
+    // Our own attestations are over our own record, so the local deal id and
+    // our disclosure root are both fair game.
+    const ours = att.role === deal.role;
+    const bindings = {};
+
+    if (ours) {
+      bindings.dealId = deal.deal_id;
+      if (deal.disclosure?.merkle_root) bindings.merkleRoot = deal.disclosure.merkle_root;
+    } else {
+      if (deal.payment?.fingerprint) bindings.dealId = deal.payment.fingerprint;
+      const expected = counterparty ?? deal.terms?.pay_to;
+      if (expected && kind === 'delivery') bindings.signer = expected;
+    }
 
     const res = verifyAttestation(att, bindings);
     if (!res.ok) return refuse(`attestation[${kind}] failed verification: ${res.reason}`);
