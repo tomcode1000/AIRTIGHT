@@ -1,0 +1,34 @@
+{
+  "name": "airtight",
+  "version": "0.1.0",
+  "description": "Write-before-risk memory for agents. Payment Safety: an agent that cannot be made to pay twice. Task Checkpointing: an agent that knows how far it got.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./airtight/index.mjs",
+  "exports": {
+    ".": "./airtight/index.mjs",
+    "./payments": "./airtight/payments.mjs",
+    "./tasks": "./airtight/tasks/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "airtight/index.mjs",
+    "airtight/payments.mjs",
+    "airtight/memory/",
+    "airtight/tasks/",
+    "airtight/x402/",
+    "airtight/staging/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": { "node": ">=22" },
+  "keywords": [
+    "agents", "crash-safety", "idempotency", "checkpointing",
+    "x402", "base", "usdc", "sibyl-memory", "write-ahead"
+  ],
+  "sideEffects": false,
+  "dependencies": {},
+  "scripts": {
+    "test": "cd airtight && npm test"
+  }
+}

@@ -17,6 +17,24 @@ INTENT → QUOTED → AUTHORIZED → IN_FLIGHT → PAID(tx) → DELIVERED(hash) 
                     PAID/DELIVERED/CLOSED --evidence--> DISPUTED (terminal)
 ```
 
+## Install
+
+Zero runtime dependencies. Node 22+.
+
+```bash
+npm install github:tomcode1000/AITIGHT       # while the repo is private, you need access
+```
+
+```js
+import { TaskMemory }  from 'airtight/tasks';      // checkpointing only
+import { DealMemory }  from 'airtight/payments';   // payment safety only
+import { ... }         from 'airtight';            // both
+```
+
+Each subpath pulls in only its own module. Nothing is installed globally and
+nothing runs in the background — it is a library you call, not a daemon that
+watches your agent.
+
 ## Two modules, one principle
 
 AIRTIGHT is a layer, not an application. The buyer agent in this repo is the

@@ -525,7 +525,18 @@
   <div class="wrap">
     <section class="layer" id="layer">
       <h2>It is a layer, not an app.</h2>
-      <p class="sub">Four calls, in this order. The order is the product.</p>
+      <p class="sub">
+        Zero dependencies, Node 22+. Install one module or both — each subpath pulls in
+        only its own. It is a library you call, not a daemon that watches your agent.
+      </p>
+
+      <div class="code" style="margin-top:22px">
+<span class="c">$</span> npm install github:tomcode1000/AITIGHT<br><br>
+<span class="b">import</span> { TaskMemory } <span class="b">from</span> <span class="o">'airtight/tasks'</span>;<span class="c">     // checkpointing only</span><br>
+<span class="b">import</span> { DealMemory } <span class="b">from</span> <span class="o">'airtight/payments'</span>;<span class="c">  // payment safety only</span>
+      </div>
+
+      <p class="sub" style="margin-top:28px">Then four calls, in this order. The order is the product.</p>
 
       <div class="code">
 <span class="c">// 1. on wake, ask what you may do. never assume.</span><br>
