@@ -174,8 +174,16 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const p = url.pathname;
 
-  if (p === '/' || p === '/index.html') {
-    const html = fs.readFileSync(path.join(HERE, 'deal-room.html'), 'utf8');
+  // Both pages come off this server so everything is same-origin: the Deal Room
+  // can call the API, and the overview's links stay local instead of bouncing
+  // out to the hosted preview.
+  const page = p === '/' || p === '/room' ? 'deal-room.html'
+             : p === '/overview' || p === '/index.html' ? 'index.html'
+             : null;
+  if (page) {
+    let html = fs.readFileSync(path.join(HERE, page), 'utf8');
+    html = html.replace(/https:\/\/claude\.ai\/code\/artifact\/66be152e-6dbd-41cd-b120-3208e4370c65/g, '/room')
+               .replace(/https:\/\/claude\.ai\/code\/artifact\/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4/g, '/overview');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
   }
