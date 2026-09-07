@@ -197,7 +197,7 @@ const server = http.createServer(async (req, res) => {
       dealId: fp, termsHash: closed.terms_hash, merkleRoot: closed.disclosure.merkle_root,
       body: PAYLOAD, network: accept.network,
     });
-    if (att) await mem.putAttestation(att);
+    if (att) await mem.putAttestation(dealId, att);
 
     const headers = { 'Content-Type': 'application/json', 'X-PAYMENT-RESPONSE': headerValue };
     if (att) headers['X-AIRTIGHT-ATTESTATION'] = Buffer.from(JSON.stringify(att)).toString('base64');

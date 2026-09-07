@@ -1,0 +1,457 @@
+<title>AIRTIGHT Deal Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --ground:#0A1119; --surface:#111C28; --card:#16222F; --card-hd:#1A2836; --inset:#0C1620;
+    --line:#2A3B4D; --line-soft:#1F2E3D;
+    --text:#E9EDF1; --muted:#94A3B4; --faint:#5D6E80;
+    --link:#539FE5; --accent:#FF9900; --go:#3FBF7F; --hold:#E8A33D; --stop:#E05252;
+    --go-dim:rgba(63,191,127,.12); --hold-dim:rgba(232,163,61,.12);
+    --stop-dim:rgba(224,82,82,.12); --link-dim:rgba(83,159,229,.12);
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --r:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ::selection{background:var(--link);color:#08131D}
+  a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+  .bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--line-soft)}
+  .brand{font-weight:600;font-size:14px;letter-spacing:.14em;display:flex;align-items:center;gap:9px}
+  .brand i{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:none}
+  .brand span{font-weight:400;color:var(--muted);font-size:12px;letter-spacing:.08em}
+  .bar .right{margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-family:var(--mono);font-size:10.5px;padding:4px 10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .pill.go{color:var(--go);border-color:rgba(63,191,127,.45);background:var(--go-dim)}
+  .pill.hold{color:var(--hold);border-color:rgba(232,163,61,.45);background:var(--hold-dim)}
+  .pill.stop{color:var(--stop);border-color:rgba(224,82,82,.45);background:var(--stop-dim)}
+  .pill.link{color:var(--link);border-color:rgba(83,159,229,.45);background:var(--link-dim)}
+
+  .btn{font-family:var(--sans);font-size:12.5px;font-weight:500;padding:8px 16px;border-radius:999px;cursor:pointer;border:1px solid var(--link);background:transparent;color:var(--link);display:inline-flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;transition:background .12s,color .12s}
+  .btn:hover:not(:disabled){background:var(--link-dim)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#10202D;font-weight:600}
+  .btn.primary:hover:not(:disabled){background:#FFAD2E}
+  .btn.danger{border-color:var(--stop);color:var(--stop)}
+  .btn.danger:hover:not(:disabled){background:var(--stop);color:#1A0808}
+  .btn.warn{border-color:var(--hold);color:var(--hold)}
+  .btn.warn:hover:not(:disabled){background:var(--hold);color:#1C1305}
+  .btn.wide{width:100%}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn .sub{font-family:var(--mono);font-size:10.5px;opacity:.7;font-weight:400}
+
+  .room{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(320px,1.25fr) minmax(270px,1fr);gap:12px;padding:12px 18px;max-width:1760px;margin:0 auto;width:100%}
+  .col{display:grid;gap:12px;align-content:start;min-height:0}
+  @media (min-width:1180px) and (min-height:660px){
+    html{height:100%}
+    body{height:100%;overflow:hidden;display:flex;flex-direction:column}
+    .bar{flex:none}
+    .room{flex:1;min-height:0}
+    .col{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+    .col::-webkit-scrollbar{width:7px}
+    .col::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  }
+
+  .card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .card > header{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--card-hd);border-bottom:1px solid var(--line-soft)}
+  .card > header h2{margin:0;font-size:14.5px;font-weight:600}
+  .card > header .hr{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .card > .body{padding:12px 14px}
+  .card.warn{border-color:rgba(232,163,61,.45)}
+  .card.warn > header{background:rgba(232,163,61,.1)}
+  .card.warn > header h2{color:var(--hold)}
+
+  .row{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .row:last-child{border-bottom:0}
+  .row .k{font-size:12px;color:var(--muted)}
+  .row .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .row .v.go{color:var(--go)}.row .v.link{color:var(--link)}.row .v.faint{color:var(--faint)}.row .v.hold{color:var(--hold)}
+
+  .stat{padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .stat:last-child{border-bottom:0}
+  .stat .l{font-size:12.5px;color:var(--text)}
+  .stat .nr{display:flex;align-items:baseline;gap:12px;justify-content:space-between;margin-top:1px}
+  .stat .n{font-family:var(--mono);font-size:27px;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .n.go{color:var(--go)}
+  .stat .r{font-size:11.5px;color:var(--muted)}
+
+  .node{display:grid;grid-template-columns:15px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .node:last-child{border-bottom:0}
+  .node .d{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--faint);justify-self:center}
+  .node.done .d{background:var(--go);border-color:var(--go)}
+  .node .n{font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;color:var(--faint)}
+  .node.done .n{color:var(--text)}
+  .node .t{font-family:var(--mono);font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .chip{border-radius:999px;font-size:10.5px;padding:2px 9px;white-space:nowrap;color:var(--go);border:1px solid rgba(63,191,127,.35);background:var(--go-dim)}
+  .killrow{margin:7px 0;padding:10px 12px;border-radius:6px;background:var(--stop-dim);border:1px solid rgba(224,82,82,.42);font-family:var(--mono);font-size:11.5px;color:var(--stop)}
+
+  .log{background:var(--inset);padding:11px 14px;display:grid;gap:5px;align-content:start;min-height:120px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .log::-webkit-scrollbar{width:7px}
+  .log::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .l{display:grid;grid-template-columns:54px 1fr;gap:9px;align-items:baseline}
+  .l time{font-family:var(--mono);font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .l span{font-family:var(--mono);font-size:12px;color:#A7B6C6;overflow-wrap:anywhere}
+  .l.good span{color:var(--go)}
+  .l.chain span{color:var(--link)}
+  .l.refusal span{color:var(--hold)}
+  .l.dead span{color:var(--faint)}
+  .l.held span{color:var(--stop)}
+  .l.meta span{color:var(--muted)}
+  .l.err span{color:var(--stop)}
+
+  .sel{padding:12px 14px;display:grid;gap:9px;border-bottom:1px solid var(--line-soft)}
+  .sel .hd{display:flex;align-items:center;gap:9px}
+  .sel .hd .nm{font-size:13.5px;font-weight:600}
+  .sel .hd .pill{margin-left:auto}
+  .sel .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}
+  .sel .meta .k{font-size:11px;color:var(--muted);display:block}
+  .sel .meta .v{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
+  .sel .meta .v.link{color:var(--link)}.sel .meta .v.go{color:var(--go)}
+
+  .cat{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .cat .nm{font-family:var(--mono);font-size:12.5px}
+  .cat .ds{font-size:11px;color:var(--muted);grid-column:1}
+  .cat .ct{font-family:var(--mono);font-size:20px;color:var(--go);grid-row:1/3;align-self:center;font-variant-numeric:tabular-nums}
+  .cat.zero .ct{color:var(--faint)}
+  .cat .tag{margin-left:7px;font-size:9.5px;border-radius:999px;padding:1px 7px;color:var(--hold);border:1px solid rgba(232,163,61,.45)}
+
+  .note{font-size:12px;line-height:1.5;color:var(--muted);padding:11px 14px;background:var(--inset);border-top:1px solid var(--line-soft)}
+  .note b{color:var(--go);font-weight:600}
+  .note.warn b{color:var(--hold)}
+  .note.stop b{color:var(--stop)}
+
+  .field{display:grid;gap:5px;margin-top:10px}
+  .field label{font-size:12px;color:var(--muted)}
+  select{font-family:var(--sans);font-size:12.5px;color:var(--text);background:var(--inset);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;width:100%}
+
+  .banner{display:none;padding:9px 18px;font-size:12.5px;background:var(--hold-dim);border-bottom:1px solid rgba(232,163,61,.4);color:var(--hold)}
+  .banner.on{display:block}
+  .banner b{font-weight:600}
+
+  @media (max-width:1180px){.room{grid-template-columns:1fr 1fr}.col:nth-child(3){grid-column:1/-1}}
+  @media (max-width:760px){.room{grid-template-columns:1fr;padding-inline:12px}.col:nth-child(3){grid-column:auto}.sel .meta{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="bar">
+  <div class="brand"><i></i>AIRTIGHT <span>Deal Room</span></div>
+  <div class="right">
+    <span class="pill link" id="netPill"><i></i>base-sepolia</span>
+    <span class="pill" id="memPill"><i></i>memory</span>
+    <span class="pill" id="agentPill"><i></i>idle</span>
+    <a href="https://claude.ai/code/artifact/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4">Overview</a>
+  </div>
+</div>
+
+<div class="banner" id="banner">
+  <b>Preview.</b> This hosted copy cannot reach a local agent, so it shows a completed run.
+  Run <span style="font-family:var(--mono)">node web/server.mjs</span> and open
+  <span style="font-family:var(--mono)">localhost:4300</span> for the live controls.
+</div>
+
+<div class="room">
+
+  <!-- ══ 1 · actors ══════════════════════════════════════════════ -->
+  <div class="col">
+    <section class="card">
+      <header>
+        <h2>Buyer agent</h2>
+        <div class="hr"><span class="pill" id="buyerPill"><i></i>idle</span></div>
+      </header>
+      <div class="body">
+        <div class="row"><span class="k">Deal</span><span class="v" id="dealRef">—</span></div>
+        <div class="row"><span class="k">Payer</span><span class="v" id="payer">—</span></div>
+        <div class="row"><span class="k">Holds ETH</span><span class="v faint">None — facilitator pays gas</span></div>
+
+        <div class="field">
+          <label for="killat">Hold at boundary</label>
+          <select id="killat">
+            <option value="AT:INTENT">INTENT</option>
+            <option value="AT:QUOTED">QUOTED</option>
+            <option value="AT:AUTHORIZED">AUTHORIZED</option>
+            <option value="AT:IN_FLIGHT" selected>IN_FLIGHT — signed, not yet paid</option>
+            <option value="AT:SETTLED">SETTLED — paid, not yet recorded</option>
+            <option value="AT:PAID">PAID</option>
+            <option value="AT:DELIVERED">DELIVERED</option>
+          </select>
+        </div>
+
+        <div style="display:grid;gap:7px;margin-top:11px">
+          <button class="btn primary wide" id="bStart">Start deal <span class="sub">0.01 USDC</span></button>
+          <button class="btn danger wide" id="bKill" disabled>Kill agent <span class="sub">SIGKILL</span></button>
+          <button class="btn wide" id="bResume" disabled>Restart cold <span class="sub">reads memory</span></button>
+        </div>
+      </div>
+      <div class="note">
+        <b>IN_FLIGHT</b> is the dangerous one — signed and stored, money not moved, and the
+        agent cannot tell from outside which side of the payment it is on.
+      </div>
+    </section>
+
+    <section class="card">
+      <header><h2>Seller</h2><div class="hr"><span class="pill" id="sellerPill"><i></i>counterparty</span></div></header>
+      <div class="sel">
+        <div class="hd"><span class="nm">report-42</span><span class="pill go"><i></i>Online</span></div>
+        <div class="meta">
+          <div><span class="k">Endpoint</span><span class="v" id="resource">:4021/report/42</span></div>
+          <div><span class="k">Price</span><span class="v" id="price">0.01 USDC</span></div>
+          <div><span class="k">Pays to</span><span class="v link" id="payto">—</span></div>
+          <div><span class="k">Signs delivery</span><span class="v go" id="attested">—</span></div>
+        </div>
+      </div>
+      <div class="note">
+        An ordinary x402 endpoint. AIRTIGHT protects the buyer <b>without requiring anything
+        of it</b> — a real seller could be anyone.
+      </div>
+    </section>
+  </div>
+
+  <!-- ══ 2 · the deal ════════════════════════════════════════════ -->
+  <div class="col">
+    <section class="card">
+      <header>
+        <h2>Deal pipeline</h2>
+        <div class="hr"><span class="pill" id="statePill"><i></i>no deal</span></div>
+      </header>
+      <div class="body" id="pipeline"></div>
+      <div class="note">
+        Every state is <b>written before the action it authorises</b>. The write is the
+        permission — no record, no action.
+      </div>
+    </section>
+
+    <section class="card" style="flex:1;min-height:180px">
+      <header><h2>Agent output</h2><div class="hr"><span class="pill" id="streamPill"><i></i>waiting</span></div></header>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <!-- ══ 3 · evidence ════════════════════════════════════════════ -->
+  <div class="col">
+    <section class="card">
+      <header><h2>Settlement</h2></header>
+      <div class="body">
+        <div class="stat">
+          <div class="l">Payments for this deal</div>
+          <div class="nr"><span class="n go" id="settlements">0</span><span class="r" id="settleNote">no deal yet</span></div>
+        </div>
+        <div class="stat">
+          <div class="l">Double payments</div>
+          <div class="nr"><span class="n" id="doubles">0</span><span class="r">enforced by the chain</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <header><h2>On-chain</h2><div class="hr"><span class="pill link" id="txPill"><i></i>pending</span></div></header>
+      <div class="body">
+        <div class="row"><span class="k">Transaction</span><span class="v link" id="tx">—</span></div>
+        <div class="row"><span class="k">Nonce stored</span><span class="v go" id="nonce">—</span></div>
+        <div class="row"><span class="k">Terms hash</span><span class="v" id="terms">—</span></div>
+        <div class="row"><span class="k">Payload hash</span><span class="v" id="payload">—</span></div>
+      </div>
+      <div class="note">
+        <b>The stored nonce is the burned nonce.</b> The instruction we recorded is the one
+        the token contract consumed — it cannot be spent a second time.
+      </div>
+    </section>
+
+    <section class="card warn">
+      <header><h2>Sibyl Memory</h2><div class="hr"><span class="pill" id="recPill"><i></i>0 records</span></div></header>
+      <div class="body">
+        <div class="cat" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Deal state machine</span></div>
+        <div class="cat" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Consumed fingerprints · replay guard</span></div>
+        <div class="cat" id="c-witness"><span class="nm">airtight-witness <span class="tag">Private</span></span><span class="ct">0</span><span class="ds">Blinding nonces · never shared</span></div>
+        <div class="cat" id="c-att"><span class="nm">airtight-att</span><span class="ct">0</span><span class="ds">Seller's signed delivery</span></div>
+        <div style="margin-top:11px">
+          <button class="btn warn wide" id="bWipe">Delete all memory <span class="sub">irreversible</span></button>
+        </div>
+      </div>
+      <div class="note warn">
+        Removing the memory must break the product. With no verifiable record the agent
+        <b>refuses to sign or pay</b> — starting over is how you pay twice.
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const ORDER = ['INTENT','QUOTED','AUTHORIZED','IN_FLIGHT','PAID','DELIVERED','CLOSED'];
+  const WROTE = {
+    INTENT:'terms written', QUOTED:'challenge written', AUTHORIZED:'payer written',
+    IN_FLIGHT:'nonce written', PAID:'tx written', DELIVERED:'hash + signature', CLOSED:'sealed',
+  };
+  const short = (h, a=8, b=6) => !h ? '—' : (String(h).length <= a+b+2 ? h : String(h).slice(0,a)+'…'+String(h).slice(-b));
+
+  let live = false, killedAt = null;
+
+  /* ── rendering ─────────────────────────────────────────────── */
+  function pill(el, cls, text){ el.className = 'pill ' + cls; el.innerHTML = '<i></i>' + text; }
+
+  function renderPipeline(deal){
+    const box = $('pipeline');
+    if(!deal){ box.innerHTML = '<div style="color:var(--faint);font-size:12.5px;padding:6px 0">No deal open. Start one to see states written to memory.</div>'; return; }
+    const reached = new Set((deal.transitions||[]).map(t=>t.to));
+    const at = Object.fromEntries((deal.transitions||[]).map(t=>[t.to, String(t.at).slice(11,19)]));
+    let html = '';
+    for(const s of ORDER){
+      const done = reached.has(s);
+      html += `<div class="node ${done?'done':''}"><i class="d"></i><span class="n">${s}</span>`
+           +  `${done?`<span class="chip">${WROTE[s]}</span>`:'<span></span>'}`
+           +  `<span class="t">${at[s]||''}</span></div>`;
+      if(killedAt === s){
+        html += `<div class="killrow">Killed — SIGKILL after ${s} · the deal was frozen here</div>`;
+      }
+    }
+    if(deal.state === 'DISPUTED') html += `<div class="killrow">DISPUTED — evidence held</div>`;
+    box.innerHTML = html;
+  }
+
+  function renderState(s){
+    $('dealRef').textContent = s.dealId ? short(s.dealId, 12, 4) : '—';
+    $('payer').textContent   = s.deal?.payer ? short(s.deal.payer) : '—';
+    $('payto').textContent   = s.deal?.pay_to ? short(s.deal.pay_to) : '—';
+    $('price').textContent   = s.deal?.price != null ? s.deal.price + ' USDC' : '0.01 USDC';
+    $('resource').textContent= (s.resource||'').replace(/^https?:\/\/localhost/,'');
+    $('attested').textContent= s.deal ? (s.deal.attested ? 'Yes · verified' : 'not yet') : '—';
+    $('tx').textContent      = short(s.deal?.tx_hash, 10, 6);
+    $('nonce').textContent   = short(s.deal?.nonce, 10, 7);
+    $('terms').textContent   = short(s.deal?.terms_hash, 8, 4);
+    $('payload').textContent = short(s.deal?.payload_sha256, 8, 4);
+
+    $('settlements').textContent = s.settlements ?? 0;
+    $('settleNote').textContent  = s.dealId ? (killedAt ? 'killed once, mid-flight' : 'one deal') : 'no deal yet';
+
+    const st = s.deal?.state;
+    if(st) pill($('statePill'), st==='CLOSED'?'go':st==='DISPUTED'?'stop':'hold', st);
+    else   pill($('statePill'), '', 'no deal');
+
+    if(s.deal?.tx_hash) pill($('txPill'),'link','settled'); else pill($('txPill'),'','pending');
+
+    const m = s.memory || {deal:0,fp:0,witness:0,att:0,total:0};
+    for(const [key,id] of [['deal','c-deal'],['fp','c-fp'],['witness','c-witness'],['att','c-att']]){
+      const el = $(id);
+      el.querySelector('.ct').textContent = m[key];
+      el.classList.toggle('zero', m[key] === 0);
+    }
+    pill($('recPill'), m.total ? 'go' : 'hold', m.total + ' records');
+    pill($('memPill'), m.total ? 'go' : 'hold', m.total ? 'Sibyl Memory' : 'memory empty');
+
+    renderPipeline(s.deal);
+  }
+
+  function renderAgent(a){
+    const map = {
+      idle:['','Idle'], running:['go','Running'], held:['stop','Held — kill it'],
+      killed:['stop','Killed'], resuming:['link','Resuming'], done:['go','Completed'],
+      refused:['hold','Refused'],
+    };
+    const [cls,label] = map[a] || ['','—'];
+    pill($('agentPill'), cls, label);
+    pill($('buyerPill'), cls, label);
+    if(!live) return;
+    $('bStart').disabled  = (a === 'running' || a === 'held' || a === 'resuming');
+    $('bKill').disabled   = !(a === 'running' || a === 'held');
+    $('bResume').disabled = !(a === 'killed' || a === 'refused');
+  }
+
+  function addLine(e){
+    const box = $('log');
+    const d = document.createElement('div');
+    d.className = 'l ' + (e.kind || 'out');
+    d.innerHTML = `<time>${e.t}</time><span></span>`;
+    d.querySelector('span').textContent = e.text;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+    if(e.kind === 'held'){ const m = /kill -9 (\d+)/.exec(e.text); if(m) window.__pid = m[1]; }
+  }
+
+  /* ── live wiring ───────────────────────────────────────────── */
+  async function post(path, body){
+    const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+    const j = await r.json().catch(()=>({}));
+    if(!j.ok && j.error) addLine({t:new Date().toTimeString().slice(0,8), text:j.error, kind:'err'});
+    return j;
+  }
+
+  function connect(){
+    const es = new EventSource('/api/events');
+    es.onopen = () => pill($('streamPill'),'go','connected');
+    es.onerror = () => pill($('streamPill'),'hold','reconnecting');
+    es.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if(m.type === 'log')   addLine(m);
+      if(m.type === 'agent'){ renderAgent(m.agent); if(m.agent === 'killed'){} }
+      if(m.type === 'state')  renderState(m.state);
+      if(m.type === 'clear'){ $('log').innerHTML = ''; killedAt = null; }
+      if(m.type === 'deal')   killedAt = null;
+    };
+  }
+
+  async function boot(){
+    try{
+      const r = await fetch('/api/state');
+      if(!r.ok) throw new Error('no api');
+      live = true;
+      renderState(await r.json());
+      connect();
+
+      $('bStart').onclick  = () => post('/api/start', {killAt: $('killat').value});
+      $('bKill').onclick   = async () => {
+        const s = $('killat').value.replace('AT:','');
+        killedAt = ORDER.includes(s) ? s : null;
+        await post('/api/kill');
+      };
+      $('bResume').onclick = () => post('/api/resume');
+      $('bWipe').onclick   = async () => { await post('/api/wipe'); const r2 = await fetch('/api/state'); renderState(await r2.json()); };
+    }catch{
+      // Hosted preview: no local agent reachable. Show a completed run.
+      $('banner').classList.add('on');
+      for(const b of ['bStart','bKill','bResume','bWipe']) $(b).disabled = true;
+      pill($('streamPill'),'','preview');
+      killedAt = 'IN_FLIGHT';
+      const now = '2026-09-05T14:43:';
+      renderState({
+        dealId:'dt-1757082200-a4f1', settlements:1, resource:'http://localhost:4021/report/42',
+        memory:{deal:1,fp:1,witness:1,att:1,total:4},
+        deal:{
+          state:'CLOSED',
+          transitions:[
+            {to:'INTENT',at:now+'20Z'},{to:'QUOTED',at:now+'21Z'},{to:'AUTHORIZED',at:now+'22Z'},
+            {to:'IN_FLIGHT',at:now+'22Z'},{to:'PAID',at:now+'33Z'},{to:'DELIVERED',at:now+'33Z'},
+            {to:'CLOSED',at:now+'33Z'},
+          ],
+          payer:'0x2F2FfB96b4f12C8588f9F65cd0b479D0BF30b1cf',
+          pay_to:'0x1957a9eF156242D59b9A07c21B08Ff710c12e341',
+          price:0.01, network:'base-sepolia', attested:true,
+          tx_hash:'0x195e32b1b31863ef14f37ef5953b012e995bc51ef768b63ee6e355ed7264c3ed',
+          nonce:'0x87fcd79058fbb6e7055f53b30feced9770c24496be7d89c90849076f6fe81480',
+          terms_hash:'670950aa11c4d0f2b8e7a1c6d3f90b5e7a2c4819d6b3e05f7c1a8d24b6e93a1fc',
+          payload_sha256:'8bb3fb2c4e7a19d0c56b8f3a2e91d47c6a05b83f19e2d47a6c8b05f31e9a2dced',
+        },
+      });
+      renderAgent('done');
+      for(const [t,text,kind] of [
+        ['14:43:20','AT:INTENT','out'],['14:43:21','AT:QUOTED 10000 units','out'],
+        ['14:43:22','AT:AUTHORIZED','out'],['14:43:22','AT:IN_FLIGHT nonce 0x87fcd790…','out'],
+        ['14:43:24','──── process killed ────','dead'],
+        ['14:43:31','RESUMED from IN_FLIGHT → reconcile-onchain','good'],
+        ['14:43:33','AT:SETTLED 0x195e32b1…7264c3ed','chain'],
+        ['14:43:33','AT:PAID','out'],
+        ['14:43:33','AT:ATTESTED seller signed delivery · payload matches','good'],
+        ['14:43:33','AT:DELIVERED','out'],['14:43:33','AT:CLOSED · DONE','good'],
+      ]) addLine({t,text,kind});
+    }
+  }
+  boot();
+})();
+</script>

@@ -1,0 +1,560 @@
+<title>AIRTIGHT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* AIRTIGHT — overview.
+     Console language: navy surfaces, rounded cards, hairline rows, pill controls,
+     blue links, orange primary. Single committed theme, colours painted explicitly. */
+  :root{
+    --ground:#0A1119;
+    --surface:#111C28;
+    --card:#16222F;
+    --card-hd:#1A2836;
+    --inset:#0C1620;
+    --line:#2A3B4D;
+    --line-soft:#1F2E3D;
+
+    --text:#E9EDF1;
+    --muted:#94A3B4;
+    --faint:#5D6E80;
+
+    --link:#539FE5;
+    --accent:#FF9900;
+    --go:#3FBF7F;
+    --hold:#E8A33D;
+    --stop:#E05252;
+
+    --go-dim:rgba(63,191,127,.12);
+    --hold-dim:rgba(232,163,61,.12);
+    --stop-dim:rgba(224,82,82,.12);
+    --link-dim:rgba(83,159,229,.12);
+
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --r:8px;
+    --maxw:1240px;
+    --gut:clamp(18px,4vw,48px);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ground);color:var(--text);
+    font-family:var(--sans);font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ::selection{background:var(--link);color:#08131D}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--gut)}
+  section{padding-block:clamp(46px,6vw,78px);border-top:1px solid var(--line-soft)}
+
+  .sec{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(24px,5vw,64px);align-items:start}
+  .sec .lead{max-width:none}
+  .sec h2{margin-bottom:0}
+  @media (max-width:900px){.sec{grid-template-columns:1fr;gap:14px}}
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:12px;
+  }
+  h2{font-size:clamp(22px,2.6vw,30px);font-weight:600;margin:0 0 12px;letter-spacing:-.01em;text-wrap:balance}
+  p{margin:0 0 14px;max-width:66ch;color:#BCC8D4}
+  .mono{font-family:var(--mono)}
+
+  /* ── nav ───────────────────────────────────────────────────────── */
+  nav{
+    position:sticky;top:0;z-index:20;background:var(--surface);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav-in{max-width:var(--maxw);margin:0 auto;padding:12px var(--gut);display:flex;align-items:center;gap:24px}
+  .brand{font-weight:600;font-size:15px;letter-spacing:.14em;display:flex;align-items:center;gap:9px;color:var(--text)}
+  .brand i{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:none}
+  .nav-links{margin-left:auto;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .nav-links a{font-size:13.5px;color:var(--muted)}
+  .nav-links a:hover{color:var(--text);text-decoration:none}
+  .nav-links a.live{
+    color:#10202D;background:var(--accent);border-radius:999px;padding:7px 16px;font-weight:600;
+  }
+  .nav-links a.live:hover{background:#FFAD2E;text-decoration:none}
+
+  /* ── buttons ───────────────────────────────────────────────────── */
+  .btn{
+    font-family:var(--sans);font-size:14px;font-weight:500;
+    padding:10px 22px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--link);background:transparent;color:var(--link);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:hover{background:var(--link-dim);text-decoration:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#10202D;font-weight:600}
+  .btn.primary:hover{background:#FFAD2E}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+  /* ── cards ─────────────────────────────────────────────────────── */
+  .card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);overflow:hidden}
+  .card > header{
+    display:flex;align-items:center;gap:10px;padding:13px 16px;
+    background:var(--card-hd);border-bottom:1px solid var(--line-soft);
+  }
+  .card > header h3{margin:0;font-size:15.5px;font-weight:600}
+  .card > header .hr{margin-left:auto}
+  .card > .body{padding:14px 16px}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+    font-family:var(--mono);font-size:11px;padding:4px 11px;
+    border:1px solid var(--line);color:var(--muted);white-space:nowrap;
+  }
+  .pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .pill.go{color:var(--go);border-color:rgba(63,191,127,.45);background:var(--go-dim)}
+  .pill.link{color:var(--link);border-color:rgba(83,159,229,.45);background:var(--link-dim)}
+
+  .row{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .row:last-child{border-bottom:0}
+  .row .k{font-size:12.5px;color:var(--muted)}
+  .row .v{font-family:var(--mono);font-size:13px;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .row .v.go{color:var(--go)}
+  .row .v.faint{color:var(--faint)}
+
+  /* ── hero ──────────────────────────────────────────────────────── */
+  .hero{
+    display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+    gap:clamp(24px,4vw,52px);align-items:start;
+    padding-block:clamp(44px,6vw,76px);border-top:0;
+  }
+  h1{
+    font-size:clamp(34px,5.2vw,56px);font-weight:600;line-height:1.06;
+    letter-spacing:-.025em;margin:14px 0 20px;text-wrap:balance;
+  }
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:17px;color:#C2CEDA;max-width:52ch;margin-bottom:24px}
+
+  .proof-card{margin-bottom:24px}
+  .proof-card .eq{
+    font-family:var(--mono);font-size:clamp(13px,1.5vw,15.5px);line-height:1.9;
+    display:grid;gap:2px;
+  }
+  .proof-card .eq b{color:var(--go);font-weight:500}
+  .proof-card .eq .op{color:var(--muted);padding-left:2px}
+
+  /* ── pipeline preview ──────────────────────────────────────────── */
+  .node{display:grid;grid-template-columns:16px 1fr auto;gap:11px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+  .node:last-child{border-bottom:0}
+  .node .d{width:9px;height:9px;border-radius:50%;background:var(--go);justify-self:center}
+  .node .n{font-family:var(--mono);font-size:13px;letter-spacing:.05em}
+  .node .t{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .killrow{
+    margin:8px 0;padding:11px 13px;border-radius:6px;background:var(--stop-dim);
+    border:1px solid rgba(224,82,82,.42);font-family:var(--mono);font-size:12px;color:var(--stop);
+  }
+
+  .feed{display:grid;gap:7px}
+  .l{display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:baseline}
+  .l time{font-family:var(--mono);font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .l span{font-family:var(--mono);font-size:12.5px;color:#A7B6C6;overflow-wrap:anywhere}
+  .l b{color:var(--text);font-weight:500}
+  .l.go b,.l.go span{color:var(--go)}
+  .l.link u{text-decoration:none;color:var(--link)}
+  .l.dead span{color:var(--faint)}
+
+  /* ── grids ─────────────────────────────────────────────────────── */
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+  .tile{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);padding:18px}
+  .tile .k{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.08em}
+  .tile h3{font-size:15.5px;font-weight:600;margin:9px 0 7px}
+  .tile p{font-size:14px;margin:0;color:var(--muted)}
+  .tile.bad h3{color:var(--stop)}
+  .tile.good h3{color:var(--go)}
+
+  /* ── steps ─────────────────────────────────────────────────────── */
+  .steps{margin-top:22px;background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);overflow:hidden}
+  .step{display:grid;grid-template-columns:46px 1fr auto;gap:16px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+  .step:last-child{border-bottom:0}
+  .step .i{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .step .a{font-size:14.5px}
+  .step .m{font-family:var(--mono);font-size:11.5px;border-radius:999px;padding:4px 11px;white-space:nowrap}
+  .step .m.w{color:var(--go);border:1px solid rgba(63,191,127,.35);background:var(--go-dim)}
+  .step .m.n{color:var(--faint);border:1px solid var(--line-soft)}
+  .step.crit{background:rgba(63,191,127,.05)}
+  .killband{
+    padding:12px 18px;background:var(--stop-dim);color:var(--stop);
+    font-family:var(--mono);font-size:12.5px;
+    border-top:1px solid rgba(224,82,82,.35);border-bottom:1px solid rgba(224,82,82,.35);
+  }
+
+  /* ── evidence ──────────────────────────────────────────────────── */
+  .evi{margin-top:8px}
+  .evi .body{padding:clamp(16px,2.6vw,26px)}
+  .evi .er{
+    display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:baseline;
+    padding:9px 0;border-bottom:1px solid var(--line-soft);
+  }
+  .evi .er:last-child{border-bottom:0}
+  .evi .er .k{font-size:12.5px;color:var(--muted)}
+  .evi .er .v{font-family:var(--mono);font-size:clamp(12px,1.35vw,14.5px);overflow-wrap:anywhere}
+  .evi .er .v.go{color:var(--go)}
+  .evi .er .v.link{color:var(--link)}
+  .evi .er .v.faint{color:var(--faint)}
+  .evi .match{background:var(--go-dim);border-top:1px solid rgba(63,191,127,.35);padding:14px clamp(16px,2.6vw,26px);display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+  .evi .match b{font-family:var(--mono);color:var(--go);font-size:16px}
+  .evi .match span{color:var(--muted);font-size:13.5px}
+
+  /* ── gate ──────────────────────────────────────────────────────── */
+  .gate{border-color:rgba(232,163,61,.45)}
+  .gate > header{background:rgba(232,163,61,.1)}
+  .gate > header h3{color:var(--hold)}
+  .gate .out{
+    font-family:var(--mono);font-size:clamp(12.5px,1.5vw,15px);line-height:1.8;
+    background:var(--inset);border:1px solid var(--line-soft);border-radius:6px;
+    padding:15px 17px;margin-top:14px;color:var(--hold);
+  }
+  .gate .out .p{color:var(--faint)}
+
+  /* ── table ─────────────────────────────────────────────────────── */
+  .tw{margin-top:22px;background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:580px}
+  th,td{text-align:left;padding:12px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+  th{font-size:12px;color:var(--muted);font-weight:500;background:var(--card-hd)}
+  td{font-family:var(--mono)}
+  tbody tr:last-child td{border-bottom:0}
+  td.one{color:var(--go);font-weight:600;font-variant-numeric:tabular-nums}
+  td.st{color:var(--go)}
+  tr.spot{background:rgba(63,191,127,.05)}
+
+  .stats{display:flex;gap:34px;flex-wrap:wrap;margin-top:22px}
+  .stat .n{font-family:var(--mono);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .n.go{color:var(--go)}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:5px}
+
+  footer{border-top:1px solid var(--line-soft);background:var(--surface);padding-block:22px}
+  .foot{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--faint)}
+
+  @media (max-width:1000px){
+    .hero{grid-template-columns:1fr}
+    .g3,.g4{grid-template-columns:1fr}
+    .step{grid-template-columns:34px 1fr;gap:12px}
+    .step .m{grid-column:2;justify-self:start}
+    .evi .er{grid-template-columns:1fr;gap:3px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<nav>
+  <div class="nav-in">
+    <div class="brand"><i></i>AIRTIGHT</div>
+    <div class="nav-links">
+      <a href="#problem">Problem</a>
+      <a href="#mechanism">Mechanism</a>
+      <a href="#proof">Proof</a>
+      <a href="#gate">The gate</a>
+      <a href="#stack">Stack</a>
+      <a class="live" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Open Deal Room</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <div class="hero">
+
+      <div>
+        <div class="eyebrow">Payment safety layer for autonomous agents</div>
+        <h1>Write to memory <em>before</em> you pay.</h1>
+        <p class="lede">
+          An agent killed mid-payment cannot tell whether the money left. Retry and it
+          pays twice; sit still and it is stuck holding nothing. AIRTIGHT writes the
+          signed payment instruction into memory <strong>before</strong> the money
+          moves — so a crash never leaves it guessing.
+        </p>
+
+        <div class="card proof-card">
+          <header><h3>The proof</h3><div class="hr"><span class="pill go"><i></i>Verified on Base</span></div></header>
+          <div class="body">
+            <div class="eq">
+              <span><b>nonce stored in memory</b></span>
+              <span class="op">is the same nonce</span>
+              <span><b>burned on-chain</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <a class="btn primary" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Open the Deal Room</a>
+          <a class="btn" href="#proof">See the evidence</a>
+        </div>
+      </div>
+
+      <div style="display:grid;gap:14px">
+        <div class="card">
+          <header>
+            <h3>Deal demo-1</h3>
+            <div class="hr"><span class="pill go"><i></i>Closed</span></div>
+          </header>
+          <div class="body">
+            <div class="node"><i class="d"></i><span class="n">INTENT</span><span class="t">14:43:20</span></div>
+            <div class="node"><i class="d"></i><span class="n">QUOTED</span><span class="t">14:43:21</span></div>
+            <div class="node"><i class="d"></i><span class="n">AUTHORIZED</span><span class="t">14:43:22</span></div>
+            <div class="node"><i class="d"></i><span class="n">IN_FLIGHT</span><span class="t">14:43:22</span></div>
+            <div class="killrow">Killed — SIGKILL at 14:43:24 · the money had not moved</div>
+            <div class="node"><i class="d"></i><span class="n">PAID</span><span class="t">14:43:33</span></div>
+            <div class="node"><i class="d"></i><span class="n">DELIVERED</span><span class="t">14:43:33</span></div>
+            <div class="node"><i class="d"></i><span class="n">CLOSED</span><span class="t">14:43:33</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <header><h3>Activity</h3></header>
+          <div class="body">
+            <div class="feed">
+              <div class="l"><time>14:43:22</time><span><b>written to memory</b> — authorisation, nonce 0x87fcd790…</span></div>
+              <div class="l dead"><time>14:43:24</time><span>──── process killed ────</span></div>
+              <div class="l go"><time>14:43:31</time><span><b>cold restart</b> — read state from Sibyl Memory</span></div>
+              <div class="l link"><time>14:43:33</time><span>settled once · tx <u>0x195e32b1…c3ed</u></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── problem ───────────────────────────────────────────────── -->
+  <section id="problem">
+    <div class="wrap">
+      <div class="sec">
+        <div>
+          <div class="eyebrow">01 · The failure</div>
+          <h2>The crash lands where nothing is known.</h2>
+        </div>
+        <p class="lead">
+        The dangerous moment is not the payment. It is the gap between submitting one and
+        recording that it happened — where the agent has no way to tell which side of the
+        transaction it is on.
+      </p>
+      </div>
+      <div class="g3">
+        <div class="tile"><div class="k">01</div><h3>An agent pays</h3><p>It signs a payment instruction and sends it to be settled on-chain.</p></div>
+        <div class="tile"><div class="k">02</div><h3>It dies mid-flight</h3><p>OOM, deploy, dropped connection. The process stops between sending and knowing.</p></div>
+        <div class="tile bad"><div class="k">03</div><h3>Both options are wrong</h3><p>Retry and it may pay a second time. Do nothing and it may have paid for nothing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── mechanism ─────────────────────────────────────────────── -->
+  <section id="mechanism">
+    <div class="wrap">
+      <div class="sec">
+        <div>
+          <div class="eyebrow">02 · The mechanism</div>
+          <h2>Write before you act, never after.</h2>
+        </div>
+        <p class="lead">
+        Each payment carries a nonce the token contract will honour exactly once. That
+        nonce is what makes a payment unrepeatable — so it is written to memory before it
+        is ever submitted. On waking, the agent re-submits what it stored rather than
+        signing something new.
+      </p>
+      </div>
+
+      <div class="steps">
+        <div class="step"><span class="i">01</span><span class="a">Agree terms with the seller</span><span class="m w">written first</span></div>
+        <div class="step crit"><span class="i">02</span><span class="a">Sign the payment authorisation</span><span class="m w">written first</span></div>
+        <div class="killband">The kill window — everything past this point is unknown to the agent</div>
+        <div class="step"><span class="i">03</span><span class="a">The money moves</span><span class="m n">on-chain</span></div>
+        <div class="step"><span class="i">04</span><span class="a">Payload received and hashed</span><span class="m w">written first</span></div>
+        <div class="step"><span class="i">05</span><span class="a">Deal closed</span><span class="m w">written first</span></div>
+      </div>
+
+      <p style="margin-top:20px">
+        Killed inside that window, the agent wakes holding the signed authorisation and
+        submits that exact one again. Same nonce, so the contract either settles it for
+        the first time or refuses it outright. It never needs to work out which — the
+        chain already knows.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── proof ─────────────────────────────────────────────────── -->
+  <section id="proof">
+    <div class="wrap">
+      <div class="sec">
+        <div>
+          <div class="eyebrow">03 · The evidence</div>
+          <h2>What we stored is what the chain consumed.</h2>
+        </div>
+        <p class="lead">A real settlement on Base Sepolia, read back from the chain rather than from our own logs.</p>
+      </div>
+
+      <div class="card evi">
+        <header>
+          <h3>Transaction 0x195e32b1…7264c3ed</h3>
+          <div class="hr"><span class="pill link"><i></i>Block 46426085</span></div>
+        </header>
+        <div class="body">
+          <div class="er"><span class="k">Status</span><span class="v go">SUCCESS</span></div>
+          <div class="er"><span class="k">Transfer</span><span class="v link">0x2F2FfB96…30b1cf → 0x1957a9eF…12e341 · 0.01 USDC</span></div>
+          <div class="er"><span class="k">Agreed terms</span><span class="v go">Recipient matches · amount matches</span></div>
+          <div class="er"><span class="k">Gas paid by</span><span class="v faint">0xd407e409…e7f1bf — the facilitator; the buyer holds no ETH</span></div>
+          <div class="er"><span class="k">Nonce stored in memory</span><span class="v go">0x87fcd79058fbb6e7055f53b30feced9770c24496be7d89c90849076f6fe81480</span></div>
+          <div class="er"><span class="k">Nonce burned on-chain</span><span class="v go">0x87fcd79058fbb6e7055f53b30feced9770c24496be7d89c90849076f6fe81480</span></div>
+        </div>
+        <div class="match">
+          <b>MATCH</b>
+          <span>This payment can never be repeated. Anyone can verify it.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── gate ──────────────────────────────────────────────────── -->
+  <section id="gate">
+    <div class="wrap">
+      <div class="eyebrow">04 · The test we hold ourselves to</div>
+      <div class="card gate">
+        <header><h3>Delete the memory and it stops paying</h3></header>
+        <div class="body">
+          <p style="margin-bottom:0">
+            If a product still does what it claims after its memory is removed, the memory
+            was never load-bearing. Ours is. With no verifiable record of a deal, the agent
+            will not sign and will not pay — because starting over is how you pay twice.
+          </p>
+          <div class="out">
+            <span class="p">$</span> rm memory.db<br>
+            <span class="p">$</span> airtight recall demo-1<br><br>
+            REFUSAL: no verifiable deal state for demo-1.<br>
+            Refusing to sign or pay.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── crash table ───────────────────────────────────────────── -->
+  <section id="crash">
+    <div class="wrap">
+      <div class="sec">
+        <div>
+          <div class="eyebrow">05 · Chaos results</div>
+          <h2>Killed at every point in the deal.</h2>
+        </div>
+        <p class="lead">A real process, killed with SIGKILL at each boundary, then restarted cold against the same memory. The seller counts the settlements.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="n">7</div><div class="l">Kill points</div></div>
+        <div class="stat"><div class="n go">1</div><div class="l">Settlement each</div></div>
+        <div class="stat"><div class="n go">0</div><div class="l">Double payments</div></div>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Killed at</th><th>Resumed from</th><th>Settlements</th><th>Final state</th></tr></thead>
+          <tbody>
+            <tr><td>INTENT</td><td>INTENT</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr><td>QUOTED</td><td>QUOTED</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr><td>AUTHORIZED</td><td>AUTHORIZED</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr class="spot"><td>IN_FLIGHT</td><td>IN_FLIGHT</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr class="spot"><td>SETTLED</td><td>IN_FLIGHT</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr><td>PAID</td><td>PAID</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+            <tr><td>DELIVERED</td><td>DELIVERED</td><td class="one">1</td><td class="st">CLOSED</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:18px">
+        The two highlighted rows are the argument. Killed at <span class="mono">IN_FLIGHT</span>,
+        the payment had not landed — it re-submitted and settled once. Killed at
+        <span class="mono">SETTLED</span>, the payment had landed but was not yet recorded —
+        it re-submitted the same authorisation and the chain refused it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── run it ────────────────────────────────────────────────── -->
+  <section id="run">
+    <div class="wrap">
+      <div class="sec">
+        <div>
+          <div class="eyebrow">06 · Try it</div>
+          <h2>Kill it yourself.</h2>
+        </div>
+        <p class="lead">
+        The Deal Room is the operating surface: start a real deal, choose where to kill the
+        agent, restart it cold, then delete the memory and watch it refuse.
+      </p>
+      </div>
+      <div class="cta-row" style="margin-top:20px">
+        <a class="btn primary" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Open the Deal Room</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── guarantees ────────────────────────────────────────────── -->
+  <section>
+    <div class="wrap">
+      <div class="sec" style="margin-bottom:4px">
+        <div>
+          <div class="eyebrow">07 · What it guarantees</div>
+          <h2>Four promises, none of which trust the seller.</h2>
+        </div>
+        <div></div>
+      </div>
+      <div class="g4">
+        <div class="tile good"><h3>Never pays twice</h3><p>Enforced by the token contract, not by anyone's good behaviour.</p></div>
+        <div class="tile good"><h3>Never pays blind</h3><p>No verifiable state, no signature. Refusal is the correct outcome.</p></div>
+        <div class="tile good"><h3>Never pays off-terms</h3><p>Terms are committed before signing. A changed price is refused.</p></div>
+        <div class="tile good"><h3>Always knows what it got</h3><p>The payload is hashed and checked against what the seller signed for.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── stack ─────────────────────────────────────────────────── -->
+  <section id="stack">
+    <div class="wrap">
+      <div class="sec" style="margin-bottom:4px">
+        <div>
+          <div class="eyebrow">08 · Built on</div>
+          <h2>Nothing here is mocked.</h2>
+        </div>
+        <div></div>
+      </div>
+      <div class="g3">
+        <div class="card">
+          <header><h3>Sibyl Memory</h3><div class="hr"><span class="pill">Substrate</span></div></header>
+          <div class="body">
+            <div class="row"><span class="k">airtight-deal</span><span class="v">state machine</span></div>
+            <div class="row"><span class="k">airtight-fp</span><span class="v">replay guard</span></div>
+            <div class="row"><span class="k">airtight-witness</span><span class="v">disclosure</span></div>
+            <div class="row"><span class="k">airtight-att</span><span class="v">attestations</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <header><h3>Base</h3><div class="hr"><span class="pill">Settlement</span></div></header>
+          <div class="body">
+            <div class="row"><span class="k">Asset</span><span class="v">USDC</span></div>
+            <div class="row"><span class="k">Network</span><span class="v">base-sepolia</span></div>
+            <div class="row"><span class="k">Buyer gas</span><span class="v faint">none</span></div>
+            <div class="row"><span class="k">Settled</span><span class="v go">live</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <header><h3>x402</h3><div class="hr"><span class="pill">Protocol</span></div></header>
+          <div class="body">
+            <div class="row"><span class="k">Challenge</span><span class="v">HTTP 402</span></div>
+            <div class="row"><span class="k">Authorisation</span><span class="v">EIP-3009</span></div>
+            <div class="row"><span class="k">Idempotency</span><span class="v go">nonce</span></div>
+            <div class="row"><span class="k">Gap closed</span><span class="v">issue #452</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>AIRTIGHT — crash-proof deal memory for agents that pay</span>
+    <span>Built for the Sibyl Labs Memory Hackathon · 2026</span>
+  </div>
+</footer>

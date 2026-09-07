@@ -156,9 +156,19 @@ export class DealMemory {
   }
 
   // ── attestations & witness ──────────────────────────────────────────────
-  async putAttestation(att) {
-    if (!att?.dealId || !att?.kind) throw new Error('putAttestation: attestation needs dealId and kind');
-    await this.driver.write(CAT.ATT, `${att.dealId}:${att.kind}`, att);
+  /**
+   * Store an attestation under OUR local deal id.
+   *
+   * The key and the signed content are deliberately different things. The
+   * signature binds the payment fingerprint, because that is the only id both
+   * sides of a deal derive identically; the record is filed under the local
+   * deal id, because that is how this agent looks it up. Filing it under the
+   * fingerprint made every read miss.
+   */
+  async putAttestation(dealId, att) {
+    if (!dealId) throw new Error('putAttestation: local dealId required');
+    if (!att?.kind) throw new Error('putAttestation: attestation needs a kind');
+    await this.driver.write(CAT.ATT, `${dealId}:${att.kind}`, att);
     return att;
   }
   async getAttestation(dealId, kind) { return this.driver.read(CAT.ATT, `${dealId}:${kind}`); }

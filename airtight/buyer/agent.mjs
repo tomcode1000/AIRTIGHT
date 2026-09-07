@@ -48,7 +48,7 @@ async function recordAttestation(mem, dealId, deal, att, body) {
     dealId: deal.payment?.fingerprint, signer: deal.terms.pay_to,
   });
   if (!res.ok) return { attested: false, reason: `attestation rejected: ${res.reason}` };
-  await mem.putAttestation(att);
+  await mem.putAttestation(dealId, att);
   const matches = att.payloadHash.toLowerCase() === payloadHash(body);
   return { attested: true, matches, signer: res.signer };
 }

@@ -13,7 +13,8 @@
     "seller": "node seller/server.mjs",
     "buyer": "node buyer/agent.mjs",
     "burner": "node scripts/new-burner.mjs",
-    "onchain": "node scripts/onchain.mjs"
+    "onchain": "node scripts/onchain.mjs",
+    "room": "node web/server.mjs"
   },
   "main": "index.mjs",
   "exports": {
