@@ -1,6 +1,7 @@
 # AIRTIGHT
 
-**Crash-proof deal memory for agents that pay.**
+**Write-before-risk memory for agents.** Two modules: an agent that cannot be
+made to pay twice, and an agent that knows how far it got.
 
 An autonomous agent that dies mid-purchase wakes up blind. Did it already pay?
 A blind retry double-pays. Did the payment settle but the payload never arrive?
@@ -16,10 +17,65 @@ INTENT → QUOTED → AUTHORIZED → IN_FLIGHT → PAID(tx) → DELIVERED(hash) 
                     PAID/DELIVERED/CLOSED --evidence--> DISPUTED (terminal)
 ```
 
-## Using it in your agent
+## Two modules, one principle
 
 AIRTIGHT is a layer, not an application. The buyer agent in this repo is the
-proof, not the product.
+proof, not the product. It ships as two independent modules — take either, or
+both.
+
+| | `airtight/payments` | `airtight/tasks` |
+|---|---|---|
+| **Protects** | money movement | task progress |
+| **Writes before** | the payment is submitted | each risky step begins |
+| **Records** | the signed authorisation + its nonce | the last completed step |
+| **A missing record means** | **REFUSAL** — refuse to act | **start from zero** |
+| **Sibyl categories** | `airtight-deal` `-fp` `-witness` `-att` | `airtight-task` |
+
+Both apply the same rule: **write the thing that makes recovery possible before
+taking the risk, never after.** They share the storage drivers and nothing else
+— separate categories, separate code paths, no cross-reads. Deleting every task
+record leaves payments untouched, and the reverse.
+
+Which one you need turns on a single question: **is the step reversible?**
+
+- **Irreversible** — money, an email, a delete. Use **Payment Safety**. A
+  missing record must mean refusal, because starting over is how you pay twice.
+- **Reversible but expensive** — a long import, a multi-stage build, a scrape.
+  Use **Task Checkpointing**. Starting from zero is slow, not dangerous.
+
+### Task Checkpointing
+
+```js
+import { TaskMemory, SibylDriver, installCrashHooks } from 'airtight/tasks';
+
+const mem  = new TaskMemory(new SibylDriver());
+const task = 'nightly-import';
+
+let { resumeFrom } = await mem.resume(task);      // 0 on a first run
+await mem.start(task, { label: 'Nightly import', steps: 4 });
+installCrashHooks({ mem, taskId: task, step: () => resumeFrom - 1 });
+
+for (let i = resumeFrom; i < 4; i++) {
+  await doStep(i);                  // the risky part
+  await mem.checkpoint(task, i);    // survivable the moment this lands
+  resumeFrom = i + 1;
+}
+await mem.done(task);
+```
+
+Killed at any point, the next run reads `resumeFrom` and continues rather than
+redoing everything. Steps cannot rewind — a checkpoint behind the recorded one
+is refused, because rewinding is how work runs twice.
+
+`installCrashHooks` annotates the failures a process can *observe* — SIGTERM,
+SIGINT, uncaught exceptions, unhandled rejections — with a `reason` on the
+record. It cannot catch SIGKILL, an OOM kill, or power loss, and **on Windows
+no signal is catchable at all** (Node maps `kill('SIGTERM')` onto
+`TerminateProcess`). That is precisely why the checkpoint goes *before* the step
+and the hooks are only an annotation. They also re-raise what they caught: a
+handler that recorded and swallowed would turn every crash into a clean exit 0.
+
+### Payment Safety
 
 ```js
 import {
@@ -72,6 +128,8 @@ this table.
 | **Delivery notarisation** — the seller signs what it delivered, under a domain disjoint from USDC's | `airtight-att` | [notary.mjs](airtight/staging/selective_disclosure/notary.mjs) |
 | **Selective disclosure** — commit to terms, reveal chosen fields with proofs; blinding nonces held apart from the shareable record | `airtight-witness` | [merkle.js](airtight/staging/selective_disclosure/merkle.js) |
 | **Recall surface** — a cold process reading only what reached storage | reads all | [cli.mjs](airtight/cli.mjs) |
+| **Task checkpointing** — progress written before each step; resume instead of restart | `airtight-task` | [tasks/checkpoint.mjs](airtight/tasks/checkpoint.mjs) |
+| **Crash capture** — SIGTERM/SIGINT/exception annotated onto the record, then re-raised | `airtight-task` | [tasks/guard.mjs](airtight/tasks/guard.mjs) |
 
 A live deal writes all four categories:
 

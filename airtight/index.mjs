@@ -1,59 +1,33 @@
 /**
- * AIRTIGHT — crash-proof deal memory for agents that pay.
+ * AIRTIGHT — write-before-risk memory for agents.
  *
- * Drop this into an agent that spends money. The guarantee is that it cannot be
- * made to pay twice, cannot pay blind, and can always say afterwards what it
- * paid for — across crashes, against a counterparty you do not control.
+ * Two independent modules under one layer. Take either, or both.
  *
- * The ordering below is the entire product. Everything else is detail.
+ *   airtight/payments   Payment Safety      an agent that cannot pay twice
+ *   airtight/tasks      Task Checkpointing  an agent that knows how far it got
  *
- *   import { DealMemory, SibylDriver, signPayment, headerFromStored,
- *            assessDeal, mayTransfer } from 'airtight';
+ * They share one principle: record the thing that makes recovery possible
+ * BEFORE taking the risk, never after. They share the storage drivers. They
+ * share nothing else — separate Sibyl categories, separate code paths, no
+ * cross-reads. Removing one does not affect the other.
  *
- *   const mem = new DealMemory(new SibylDriver());
+ *   Payment Safety     airtight-deal · airtight-fp · airtight-witness · airtight-att
+ *   Task Checkpointing airtight-task
  *
- *   // 1. On wake, ask what you are allowed to do. Never assume.
- *   const deal = await mem.get(dealId);
- *   const verdict = assessDeal({ deal, attestations: await mem.getAttestations(dealId) });
- *   if (verdict.verdict !== 'RESUME') return;          // REFUSAL or DISPUTED
+ * Which one you want:
  *
- *   // 2. Commit to the terms BEFORE signing anything.
- *   const d = await mem.open({ role: 'buyer', terms });
+ *   Is the step irreversible — money, an email, a delete?   → Payment Safety.
+ *     A missing record must mean REFUSAL, not "start over".
  *
- *   // 3. Sign, then store, THEN pay. This order is the whole point: the
- *   //    EIP-3009 nonce is what makes the payment unrepeatable, so it must be
- *   //    durable before the money moves.
- *   const signed = signPayment({ privateKey, requirements });
- *   if (!await mem.claimFingerprint(signed.fingerprint, d.deal_id)) return;  // would double-pay
- *   await mem.transition(d.deal_id, 'IN_FLIGHT', {
- *     payment: { fingerprint: signed.fingerprint, x402: signed.stored },
- *   });
- *   await submitPayment(url, signed.header);
+ *   Is the step safe to repeat but expensive to repeat?     → Task Checkpointing.
+ *     A missing record means starting from zero, which is slow, not dangerous.
  *
- *   // 4. Killed anywhere above? On the next run step 1 returns
- *   //    RESUME/reconcile-onchain, and you re-submit the STORED authorisation:
- *   //       headerFromStored(deal.payment.x402)
- *   //    Same nonce, so the token contract settles it at most once. Signing a
- *   //    fresh one instead is the double-pay.
- *
- * Memory is load-bearing by construction: `transition()` refuses to record a
- * state whose evidence is absent, so the action it guards never happens.
+ * Importing from the root gives you both. Importing from a subpath gives you
+ * one, and pulls in nothing from the other.
  */
 
-// ── memory ──────────────────────────────────────────────────────────────────
-export { DealMemory, CAT, ORDER, newDealId, paymentFingerprint } from './memory/deals.mjs';
-export { SibylDriver } from './memory/driver-sibyl.mjs';
-export { FileDriver } from './memory/driver-file.mjs';   // test double, not for production
-
-// ── what a woken agent may do ───────────────────────────────────────────────
-export { assessDeal, mayTransfer, termsHash, VERDICT } from './staging/selective_disclosure/resume.mjs';
-
-// ── x402 payment leg ────────────────────────────────────────────────────────
+export * from './payments.mjs';
 export {
-  signPayment, headerFromStored, fingerprintFor, fingerprintOfStored,
-  fetchChallenge, submitPayment, encodeHeader, CHAIN_IDS,
-} from './x402/pay.mjs';
-
-// ── proving a deal to someone else ──────────────────────────────────────────
-export { notarize, verifyAttestation, verifyDelivery, payloadHash, KINDS } from './staging/selective_disclosure/notary.mjs';
-export { buildCommitment, selectDisclosure, verifyDisclosure } from './staging/selective_disclosure/merkle.js';
+  TaskMemory, TASK_CAT, TASK_STATES, newTaskId, memoryPressure,
+  installCrashHooks, checkpointIfPressured,
+} from './tasks/index.mjs';

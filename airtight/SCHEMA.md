@@ -1,4 +1,21 @@
-# AIRTIGHT — Deal Record Schema v1 (locked Aug 25, pre-window)
+# AIRTIGHT — Record Schema
+
+Two independent modules share one substrate and one principle: write the thing
+that makes recovery possible BEFORE taking the risk.
+
+| Module | Categories | Missing record means |
+|---|---|---|
+| **Payment Safety** | `airtight-deal` · `airtight-fp` · `airtight-witness` · `airtight-att` | **REFUSAL** — never "start over", because starting over is how you pay twice |
+| **Task Checkpointing** | `airtight-task` | **start from zero** — slow, not dangerous |
+
+Isolation is by Sibyl *category*, not by a prefix inside a shared name. Category
+is the substrate's own boundary, so a key built wrong cannot silently address
+the other module's records. Neither module reads or writes the other's
+categories; removing one leaves the other intact.
+
+---
+
+# Payment Safety — Deal Record Schema v1 (locked Aug 25, pre-window)
 
 Storage substrate: Sibyl Memory MCP (`memory_remember/recall/search/list`).
 Verified shapes from spikes: `memory_remember{category, name, body}` · structured
@@ -132,3 +149,63 @@ Any of these ⇒ treat record as absent ⇒ REFUSAL (never guess):
   fields' nonces and nothing else. Withheld leaf hashes DO appear inside proof
   siblings — that is safe because leaves are blinded, and only because of that.
 - `memory_forget` archives only — demo deletion beat must wipe the db path for real.
+
+
+---
+
+# Task Checkpointing — Schema v1
+
+For work that is safe to repeat but expensive to repeat. Anything irreversible
+belongs behind Payment Safety instead: a task with no record resumes from zero
+by design, and that is the wrong answer for money.
+
+### Task record
+- **category:** `airtight-task`
+- **name:** `<task_id>` — caller-chosen, or `tk-<unix_ts>-<4 hex>`
+- **body** (dict):
+
+```
+{
+  "v": 1,
+  "task_id": "nightly-import",
+  "state": "STARTED" | "STEP" | "DONE" | "FAILED",
+  "step": 3,                      # highest step COMPLETED
+  "total_steps": 8,               # optional, for progress display
+  "label": "Nightly import",
+  "meta": { ... },                # optional, caller's own
+  "reason": "signal_SIGTERM",     # why the last write happened, if not routine
+  "started_at": <iso>,
+  "last_checkpoint_at": <iso>
+}
+```
+
+Overwritten on every checkpoint, never appended: the record is the task's
+current position, and a history would grow without bound on a long job.
+
+### Rules
+
+| Rule | Enforcement |
+|---|---|
+| Checkpoint before the risk | `checkpoint(id, n)` is called before step n+1 begins — the only thing that survives SIGKILL |
+| No rewinding | a checkpoint behind the recorded step is refused; rewinding is how work runs twice |
+| Idempotent start | `start()` returns the existing record untouched, so calling it every boot is correct |
+| Resume, don't restart | `resume()` returns `resumeFrom`, the next step to run |
+| Terminal DONE | checkpointing a DONE task is refused |
+
+### `reason` values
+
+`signal_SIGTERM` · `signal_SIGINT` · `exception: <message>` ·
+`unhandled_rejection: <message>` · `memory_pressure:<fraction>` · `null` when
+the checkpoint was routine.
+
+### What crash hooks can and cannot do
+
+`installCrashHooks()` annotates the failures a process can observe. It cannot
+catch SIGKILL, an OOM kill, or power loss — those stop the process outright.
+**On Windows there are no POSIX signals at all**: Node maps `kill('SIGTERM')`
+onto `TerminateProcess`, so a SIGTERM there behaves exactly like a SIGKILL and
+no handler runs. Exceptions and unhandled rejections are still captured.
+
+This is why the checkpoint goes *before* the step and the hooks are only an
+annotation. The hooks also re-raise what they caught — a handler that recorded
+and swallowed would turn every crash into a clean exit 0.
