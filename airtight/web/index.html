@@ -59,9 +59,17 @@
   .nav-links{margin-left:auto;display:flex;gap:22px;align-items:center}
   .nav-links a{font-size:14px;color:var(--muted);font-weight:400}
   .nav-links a:hover{color:var(--text);text-decoration:none}
-  .nav-links a.cta{color:#10202D;background:var(--accent);border-radius:999px;padding:8px 18px;font-weight:600}
+  /* The four links above move within this page. The pill leaves it for the
+     running product, so it is separated by a rule and carries an arrow —
+     otherwise it reads as a marketing CTA rather than a destination. */
+  .nav-sep{width:1px;height:20px;background:var(--line);flex:none}
+  .nav-links a.cta{
+    color:#10202D;background:var(--accent);border-radius:999px;padding:8px 16px;
+    font-weight:600;display:inline-flex;align-items:center;gap:7px;
+  }
+  .nav-links a.cta .ar{font-family:var(--mono);font-size:13px;opacity:.75}
   .nav-links a.cta:hover{background:#FFAD2E}
-  @media (max-width:720px){.nav-links a:not(.cta){display:none}}
+  @media (max-width:720px){.nav-links a:not(.cta),.nav-sep{display:none}}
 
   .btn{
     font-size:15px;font-weight:500;padding:11px 24px;border-radius:999px;
@@ -264,7 +272,8 @@
       <a href="#proof">Proof</a>
       <a href="#gate">The gate</a>
       <a href="#layer">Use it</a>
-      <a class="cta" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Deal Room</a>
+      <i class="nav-sep"></i>
+      <a class="cta" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Deal Room <span class="ar">&rarr;</span></a>
     </div>
   </div>
 </nav>
