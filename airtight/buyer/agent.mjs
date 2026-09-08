@@ -28,6 +28,7 @@ import { SibylDriver } from '../memory/driver-sibyl.mjs';
 import { DealMemory } from '../memory/deals.mjs';
 import { assessDeal, mayTransfer, VERDICT } from '../staging/selective_disclosure/resume.mjs';
 import { signPayment, headerFromStored, fetchChallenge, submitPayment } from '../x402/pay.mjs';
+import { txFound, isTxHash } from '../x402/chain.mjs';
 import { deriveAddress } from '../staging/x402/signer.mjs';
 import { verifyAttestation, payloadHash } from '../staging/selective_disclosure/notary.mjs';
 
@@ -108,7 +109,18 @@ async function main() {
     deal = await mem.transition(dealId, 'QUOTED');
     say(`AT:QUOTED ${a.maxAmountRequired} units to ${a.payTo}`);
   } else {
-    const a = assessDeal({ deal, attestations: await mem.getAttestations(dealId) });
+    // A recorded tx_hash came from a facilitator's word. Before acting on a deal
+    // that claims to be paid, ask the chain. Unreachable RPC returns null and
+    // changes nothing — only a definite "no such transaction" refuses.
+    let onChain = {};
+    if (isTxHash(deal.payment?.tx_hash)) {
+      const found = await txFound(deal.payment.tx_hash, { network: deal.terms?.network });
+      onChain = { txFound: found };
+      if (found === true) say(`VERIFIED tx ${deal.payment.tx_hash.slice(0, 10)}… confirmed on ${deal.terms?.network}`);
+      if (found === null) say('UNVERIFIED could not reach the chain — proceeding on the record');
+    }
+
+    const a = assessDeal({ deal, attestations: await mem.getAttestations(dealId), onChain });
     say(`RESUMED ${a.verdict} from ${a.from ?? '-'} → ${a.action}`);
     if (a.verdict !== VERDICT.RESUME) { say(`REFUSAL ${a.reason}`); process.exit(3); }
   }
@@ -178,10 +190,18 @@ async function main() {
     const r = await submitPayment(deal.terms.resource_url, header);
 
     if (r.status === 409) {
-      // Seller already consumed this payment: we died after it settled.
+      // The seller already consumed this payment, so we died after it settled.
+      // Take the transaction hash from ITS receipt — deriving one from the nonce
+      // would write a hash that does not exist, which is worse than none: the
+      // record would look verified and fail every check made against it.
+      const tx = r.receipt?.transaction || r.receipt?.txHash;
+      if (!isTxHash(tx)) {
+        say('REFUSAL payment consumed but the seller returned no verifiable tx');
+        process.exit(3);
+      }
       say('RECONCILE already-settled');
       deal = await mem.transition(dealId, 'PAID', {
-        payment: { ...deal.payment, tx_hash: '0x' + stored.authorization.nonce.slice(2), settled_at: new Date().toISOString() },
+        payment: { ...deal.payment, tx_hash: tx, settled_at: new Date().toISOString() },
       });
       say('AT:PAID (reconciled)');
     } else if (r.status === 200) {
