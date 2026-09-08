@@ -20,3 +20,6 @@ Thumbs.db
 .venv/
 __pycache__/
 .airtight-seller/
+
+# Internal: the filming beat sheet stays local
+airtight/DEMO.md
