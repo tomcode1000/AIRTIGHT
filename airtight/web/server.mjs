@@ -243,17 +243,17 @@ const server = http.createServer(async (req, res) => {
   // Both pages come off this server so everything is same-origin: the Deal Room
   // can call the API, and the overview's links stay local instead of bouncing
   // out to the hosted preview.
-  const page = p === '/' || p === '/room' ? 'deal-room.html'
+  const page = p === '/' || p === '/index.html' || p === '/overview' ? 'index.html'
+             : p === '/room' ? 'deal-room.html'
              : p === '/tasks' ? 'task-room.html'
              : p === '/slides' ? 'slides.html'
-             : p === '/overview' || p === '/index.html' ? 'index.html'
              : null;
   if (page) {
     let html = fs.readFileSync(path.join(HERE, page), 'utf8');
     html = html.replace(/https:\/\/claude\.ai\/code\/artifact\/66be152e-6dbd-41cd-b120-3208e4370c65/g, '/room')
                .replace(/https:\/\/claude\.ai\/code\/artifact\/9fb4b586-f957-4331-90fe-c4cae3448623/g, '/tasks')
                .replace(/https:\/\/claude\.ai\/code\/artifact\/7113b353-9d86-4c1d-87ca-ecffcb9271f0/g, '/slides')
-               .replace(/https:\/\/claude\.ai\/code\/artifact\/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4/g, '/overview');
+               .replace(/https:\/\/claude\.ai\/code\/artifact\/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4/g, '/');
     // Never cache. These pages are edited between takes, and a browser serving
     // a stale copy during a demo looks exactly like the change was never made.
     res.writeHead(200, {
@@ -393,7 +393,8 @@ server.on('error', e => {
 });
 
 server.listen(PORT, () => {
-  console.log(`AIRTIGHT Deal Room  ->  http://localhost:${PORT}`);
+  console.log(`AIRTIGHT  ->  http://localhost:${PORT}`);
+  console.log(`  /room  ·  /tasks  ·  /slides`);
   console.log(`  seller   ${RESOURCE}`);
   console.log(`  memory   ${USE_FILE ? 'file:' + (process.env.AIRTIGHT_STORE || '.airtight-memory') : 'sibyl:' + DB}`);
   console.log(`  buyer    ${process.env.DEMO_BUYER_KEY ? 'key loaded' : 'NO KEY — run . .\\scripts\\env.ps1 first'}`);
