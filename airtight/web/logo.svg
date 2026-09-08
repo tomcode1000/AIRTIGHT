@@ -1,26 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AIRTIGHT">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 35" width="44" height="35" role="img" aria-label="AIRTIGHT">
   <title>AIRTIGHT</title>
   <!--
     The mark is the mechanism, not decoration.
 
-    A track runs left to right. It is solid up to a mark, then it is cut — the
+    A track runs left to right. It is solid up to a point, then it is cut — the
     crash — and it continues on the far side. The dot sits BEFORE the cut,
     because that is the whole product: the record exists before the risk.
 
-    The surrounding bracket is a seal, drawn open on the right: sealed against
-    loss, still able to continue.
+    The bracket is a seal, drawn open on the trailing edge: sealed against loss,
+    still able to continue.
   -->
-  <g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="square">
-    <!-- seal, open on the trailing edge -->
-    <path d="M46 8 H12 a4 4 0 0 0-4 4 v40 a4 4 0 0 0 4 4 h34" opacity=".38"/>
-    <!-- the track: written, then cut, then resumed -->
-    <path d="M18 32 H30"/>
-    <path d="M42 32 H56" opacity=".55"/>
-  </g>
-  <!-- the checkpoint: written before the break -->
-  <circle cx="30" cy="32" r="4.5" fill="currentColor"/>
-  <!-- the cut -->
-  <g stroke="currentColor" stroke-width="3.5" stroke-linecap="round" opacity=".45">
-    <path d="M35 25.5 L35 38.5"/>
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC733"/>
+      <stop offset="1" stop-color="#F59E00"/>
+    </linearGradient>
+  </defs>
+  <g>
+  <path d="M38 2 H8 A6 6 0 0 0 2 8 V27 A6 6 0 0 0 8 33 H38" fill="none" stroke="url(#a)" stroke-width="4" stroke-linecap="butt"/>
+  <path d="M7 17.5 H19" fill="none" stroke="url(#a)" stroke-width="4" stroke-linecap="butt"/>
+  <circle cx="19" cy="17.5" r="3.4" fill="url(#a)"/>
+  <path d="M26.2 10.5 V24.5" fill="none" stroke="url(#a)" stroke-width="3" stroke-linecap="butt"/>
+  <path d="M30 17.5 H44" fill="none" stroke="url(#a)" stroke-width="4" stroke-linecap="butt"/>
   </g>
 </svg>
