@@ -78,7 +78,15 @@ async function recall(id) {
   if (Object.keys(atts).length) {
     console.log(`\n${C.dim('attestations')}`);
     for (const [kind, att] of Object.entries(atts)) {
-      const r = verifyAttestation(att, { merkleRoot: deal.disclosure?.merkle_root });
+      // The seller commits to its own blinded merkle root, so the buyer's root
+      // is not a shared value and binding to it always fails. Check the three
+      // things both sides derive identically: the payment fingerprint, the
+      // terms hash, and the hash of the bytes actually delivered.
+      const r = verifyAttestation(att, {
+        dealId: deal.payment?.fingerprint,
+        termsHash: deal.terms_hash,
+        payloadHash: deal.delivery?.payload_sha256,
+      });
       console.log(`  ${kind.padEnd(9)} signer ${short(att.signer)}  ${r.ok ? C.g('signature ✓') : C.r('signature ✗ ' + r.reason)}`);
     }
   }
