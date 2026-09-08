@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// x402 — pay-per-call via the x402 protocol (HTTP 402 + USDC on Base).
+// x402: pay-per-call via the x402 protocol (HTTP 402 + USDC on Base).
 // NO Stripe. Phase 4 directive.
 //
 // Flow:
@@ -7,7 +7,7 @@
 //      `accepts` payment requirements (scheme "exact", network base/base-sepolia).
 //   2. Client builds an EIP-3009 transferWithAuthorization signature and retries
 //      with `X-PAYMENT: base64({x402Version, scheme, network, payload})`.
-//   3. Server verifies via FACILITATOR (/verify) — the facilitator does all
+//   3. Server verifies via FACILITATOR (/verify): the facilitator does all
 //      on-chain/crypto checks, we stay zero-dep.
 //   4. Service runs; facilitator /settle moves the USDC; response carries
 //      X-PAYMENT-RESPONSE with the settlement receipt.
@@ -18,16 +18,16 @@
 // header gets 402 "payment replay detected". Nonce RELEASED on non-runnable
 // requests (400/422) so an agent can retry the SAME paid header with corrected
 // params (live-verified: clarify → fix county → same header settles once).
-// In-memory only — restart clears it; the EIP-3009 on-chain nonce remains the
+// In-memory only: restart clears it; the EIP-3009 on-chain nonce remains the
 // backstop against double-settlement.
 //
-// PAYMENT POLICY — IMPLEMENTED Aug-22 (was open):
+// PAYMENT POLICY: IMPLEMENTED Aug-22 (was open):
 // - Auto-retry: paid runs re-execute up to JOB_MAX_ATTEMPTS (default 2) before
 //   terminal failure (`job.attempts` persisted; history shows each attempt).
 // - Refund lane: terminal failure of a PAID job auto-credits the full price
 //   (X402_PRICE_USDC) to the payer address in a persisted service-credit ledger
 //   (`src/payment/credits.js`, CREDITS_FILE, default data/credits.json). No
-//   payout wallet needed — value stays as spendable credit.
+//   payout wallet needed: value stays as spendable credit.
 // - Credit spend: when the gate would 402, spendable credit ≥ price pays for the
 //   request outright (payment_ref becomes `credit:<payer>`); exhausted → normal
 //   payment challenge. Live-tested + unit-tested (test/credits.test.js).
@@ -50,11 +50,11 @@ const USDC_ADDRESSES = {
   'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
 };
 
-// EIP-712 domain per network — MUST match the token contract's on-chain
+// EIP-712 domain per network: MUST match the token contract's on-chain
 // name()/version() or the free facilitator rejects verify
 // (invalid_exact_evm_token_name_mismatch / invalid_exact_evm_signature).
 // base-sepolia verified live Aug-23 via eth_call: name()="USDC", version()="2".
-// base mainnet native USDC is "USD Coin"/"2" — re-verify via eth_call before flip.
+// base mainnet native USDC is "USD Coin"/"2": re-verify via eth_call before flip.
 const USDC_TOKEN_META = {
   base: { name: 'USD Coin', version: '2' },
   'base-sepolia': { name: 'USDC', version: '2' },
@@ -189,7 +189,7 @@ export async function settlePayment(paymentHeader, requirements) {
 // Track consumed signatures here: marked
 // synchronously the moment a verified payment is accepted for execution,
 // released again if the request turns out non-runnable (400/422) so an agent
-// can retry the SAME paid header with corrected params. In-memory only — a
+// can retry the SAME paid header with corrected params. In-memory only: a
 // restart clears it; the on-chain nonce remains the real backstop against
 // double-settlement.
 const usedPayments = new Map(); // fingerprint → { payer, at }

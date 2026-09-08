@@ -1,15 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// payment gate — DECOUPLED from the pipeline (brief §4.7): a gate in the
+// payment gate: DECOUPLED from the pipeline (brief §4.7): a gate in the
 // orchestrator, never woven into data logic.
 //
 // Modes (env PAYMENT_MODE):
-//   stub   — auto-approve everything (dev/testing)
-//   manual — request stays needs_payment until an admin confirms via endpoint
+//   stub: auto-approve everything (dev/testing)
+//   manual: request stays needs_payment until an admin confirms via endpoint
 //            (v1 "Stripe link / off-platform" flow)
-//   x402 | escrow — reserved hooks for Phase 4; currently behave like manual.
+//   x402 | escrow: reserved hooks for Phase 4; currently behave like manual.
 //
 // Standing clients (env STANDING_REQUESTERS, comma-separated ids) bypass the
-// gate in every mode — Larry is already a paying subscriber.
+// gate in every mode: Larry is already a paying subscriber.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STANDING = new Set(
@@ -49,7 +49,7 @@ export function createPaymentGate(mode = process.env.PAYMENT_MODE || 'stub') {
 
   /** Confirm a pending payment (admin/manual flow). */
   function confirm(job) {
-    // In manual mode confirmation simply flips the job forward — the
+    // In manual mode confirmation simply flips the job forward: the
     // orchestrator re-enqueues on this signal. Kept trivially sync on purpose.
     return true;
   }

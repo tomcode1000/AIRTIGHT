@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * airtight — read the agent's own deal memory.
+ * airtight. Read the agent's own deal memory.
  *
  * This is the fresh-session recall surface: a brand-new process, no shared
  * state, reading only what reached storage. Everything printed is either read
- * from the record or recomputed from it — nothing is narrated from context,
+ * from the record or recomputed from it: nothing is narrated from context,
  * which is the point. Hashes, not prose.
  *
  *   airtight ls
@@ -20,7 +20,7 @@ import { assessDeal, termsHash, VERDICT } from './staging/selective_disclosure/r
 import { verifyAttestation } from './staging/selective_disclosure/notary.mjs';
 
 // Sibyl Memory is the substrate. FileDriver is a test double, selected only by
-// an explicit AIRTIGHT_MEMORY=file — never the default, so the recall surface a
+// an explicit AIRTIGHT_MEMORY=file, never the default, so the recall surface a
 // judge runs reads the same store the agent wrote to.
 const USE_FILE = process.env.AIRTIGHT_MEMORY === 'file';
 const STORE = process.env.AIRTIGHT_STORE || '.airtight-memory';
@@ -31,7 +31,7 @@ const C = process.stdout.isTTY && !process.env.NO_COLOR
       g: s => `\x1b[32m${s}\x1b[0m`, r: s => `\x1b[31m${s}\x1b[0m`, y: s => `\x1b[33m${s}\x1b[0m` }
   : { dim: s => s, b: s => s, g: s => s, r: s => s, y: s => s };
 
-const short = h => h ? `${String(h).replace(/^0x/, '').slice(0, 6)}…${String(h).slice(-4)}` : '—';
+const short = h => h ? `${String(h).replace(/^0x/, '').slice(0, 6)}…${String(h).slice(-4)}` : '-';
 const driver = USE_FILE
   ? new FileDriver(STORE)
   : new SibylDriver({ bin: process.env.SIBYL_MCP_BIN || 'sibyl-memory-mcp', db: process.env.SIBYL_MEMORY_DB || null });
@@ -89,7 +89,7 @@ async function recall(id) {
   console.log(`\n${C.dim('on wake')}   ${a.verdict === VERDICT.RESUME ? C.g(a.verdict) : a.verdict === VERDICT.DISPUTED ? C.r(a.verdict) : C.y(a.verdict)} → ${a.action}${a.reason ? C.dim('  (' + a.reason + ')') : ''}`);
   if (deal.payment?.fingerprint) {
     const consumed = await mem.isConsumed(deal.payment.fingerprint);
-    console.log(`${C.dim('replay')}    fingerprint ${short(deal.payment.fingerprint)} ${consumed ? C.g('consumed — a second payment is refused') : C.dim('unclaimed')}`);
+    console.log(`${C.dim('replay')}    fingerprint ${short(deal.payment.fingerprint)} ${consumed ? C.g('consumed: a second payment is refused') : C.dim('unclaimed')}`);
   }
 }
 
@@ -97,7 +97,7 @@ async function verify(id) {
   let deal; try { deal = await mem.get(id); } catch (e) { console.log(C.r(`REFUSAL: ${e.message}`)); process.exit(3); }
   const a = assessDeal({ deal, attestations: deal ? await mem.getAttestations(id) : {} });
   const colour = a.verdict === VERDICT.RESUME ? C.g : a.verdict === VERDICT.DISPUTED ? C.r : C.y;
-  console.log(`${colour(a.verdict)}${a.reason ? ' — ' + a.reason : ''}`);
+  console.log(`${colour(a.verdict)}${a.reason ? ': ' + a.reason : ''}`);
   if (a.evidence) console.log(JSON.stringify(a.evidence, null, 2));
   process.exit(a.verdict === VERDICT.RESUME ? 0 : 3);
 }
@@ -108,7 +108,7 @@ switch (cmd) {
   case 'recall': if (!arg) { console.log('usage: airtight recall <deal_id>'); process.exit(2); } await recall(arg); break;
   case 'verify': if (!arg) { console.log('usage: airtight verify <deal_id>'); process.exit(2); } await verify(arg); break;
   default:
-    console.log('airtight — read the agent\'s own deal memory\n');
+    console.log('airtight. Read the agent\'s own deal memory\n');
     console.log('  airtight ls');
     console.log('  airtight recall <deal_id>');
     console.log('  airtight verify <deal_id>\n');

@@ -185,9 +185,9 @@
         <div class="hr"><span class="pill" id="buyerPill"><i></i>idle</span></div>
       </header>
       <div class="body">
-        <div class="row"><span class="k">Deal</span><span class="v" id="dealRef">—</span></div>
-        <div class="row"><span class="k">Payer</span><span class="v" id="payer">—</span></div>
-        <div class="row"><span class="k">Holds ETH</span><span class="v faint">None — facilitator pays gas</span></div>
+        <div class="row"><span class="k">Deal</span><span class="v" id="dealRef">-</span></div>
+        <div class="row"><span class="k">Payer</span><span class="v" id="payer">-</span></div>
+        <div class="row"><span class="k">Holds ETH</span><span class="v faint">None: facilitator pays gas</span></div>
 
         <div class="field">
           <label for="killat">Hold at boundary</label>
@@ -195,8 +195,8 @@
             <option value="AT:INTENT">INTENT</option>
             <option value="AT:QUOTED">QUOTED</option>
             <option value="AT:AUTHORIZED">AUTHORIZED</option>
-            <option value="AT:IN_FLIGHT" selected>IN_FLIGHT — signed, not yet paid</option>
-            <option value="AT:SETTLED">SETTLED — paid, not yet recorded</option>
+            <option value="AT:IN_FLIGHT" selected>IN_FLIGHT: signed, not yet paid</option>
+            <option value="AT:SETTLED">SETTLED: paid, not yet recorded</option>
             <option value="AT:PAID">PAID</option>
             <option value="AT:DELIVERED">DELIVERED</option>
           </select>
@@ -209,7 +209,7 @@
         </div>
       </div>
       <div class="note">
-        <b>IN_FLIGHT</b> is the dangerous one — signed and stored, money not moved, and the
+        <b>IN_FLIGHT</b> is the dangerous one: signed and stored, money not moved, and the
         agent cannot tell from outside which side of the payment it is on.
       </div>
     </section>
@@ -219,7 +219,7 @@
       <div class="edge">
         <div class="end us">
           <i class="dot"></i>
-          <span class="who">This agent<span class="addr" id="payerEdge">—</span></span>
+          <span class="who">This agent<span class="addr" id="payerEdge">-</span></span>
           <span class="pill" id="buyerEdgePill">buyer</span>
         </div>
         <div class="wire">
@@ -228,14 +228,14 @@
         </div>
         <div class="end">
           <i class="dot"></i>
-          <span class="who">report-42<span class="addr" id="payto">—</span></span>
+          <span class="who">report-42<span class="addr" id="payto">-</span></span>
           <span class="pill go"><i></i>online</span>
         </div>
-        <div class="row" style="padding-top:9px"><span class="k">Signs delivery</span><span class="v go" id="attested">—</span></div>
+        <div class="row" style="padding-top:9px"><span class="k">Signs delivery</span><span class="v go" id="attested">-</span></div>
       </div>
       <div class="note">
         An ordinary x402 endpoint. AIRTIGHT protects the buyer <b>without requiring anything
-        of it</b> — a real seller could be anyone.
+        of it</b>: a real seller could be anyone.
       </div>
     </section>
   </div>
@@ -250,7 +250,7 @@
       <div class="body" id="pipeline"></div>
       <div class="note">
         Every state is <b>written before the action it authorises</b>. The write is the
-        permission — no record, no action.
+        permission: no record, no action.
       </div>
     </section>
 
@@ -274,14 +274,14 @@
     <section class="card">
       <header><h2>On-chain</h2><div class="hr"><span class="pill link" id="txPill"><i></i>pending</span></div></header>
       <div class="body">
-        <div class="row"><span class="k">Transaction</span><span class="v link" id="tx">—</span></div>
-        <div class="row"><span class="k">Nonce stored</span><span class="v go" id="nonce">—</span></div>
-        <div class="row"><span class="k">Terms hash</span><span class="v" id="terms">—</span></div>
-        <div class="row"><span class="k">Payload hash</span><span class="v" id="payload">—</span></div>
+        <div class="row"><span class="k">Transaction</span><span class="v link" id="tx">-</span></div>
+        <div class="row"><span class="k">Nonce stored</span><span class="v go" id="nonce">-</span></div>
+        <div class="row"><span class="k">Terms hash</span><span class="v" id="terms">-</span></div>
+        <div class="row"><span class="k">Payload hash</span><span class="v" id="payload">-</span></div>
       </div>
       <div class="note">
         <b>The stored nonce is the burned nonce.</b> The instruction we recorded is the one
-        the token contract consumed — it cannot be spent a second time.
+        the token contract consumed; it cannot be spent a second time.
       </div>
     </section>
 
@@ -298,7 +298,7 @@
       </div>
       <div class="note warn">
         Removing the memory must break the product. With no verifiable record the agent
-        <b>refuses to sign or pay</b> — starting over is how you pay twice.
+        <b>refuses to sign or pay</b>: starting over is how you pay twice.
       </div>
     </section>
   </div>
@@ -312,7 +312,7 @@
     INTENT:'terms written', QUOTED:'challenge written', AUTHORIZED:'payer written',
     IN_FLIGHT:'nonce written', PAID:'tx written', DELIVERED:'hash + signature', CLOSED:'sealed',
   };
-  const short = (h, a=8, b=6) => !h ? '—' : (String(h).length <= a+b+2 ? h : String(h).slice(0,a)+'…'+String(h).slice(-b));
+  const short = (h, a=8, b=6) => !h ? ': ' : (String(h).length <= a+b+2 ? h : String(h).slice(0,a)+'…'+String(h).slice(-b));
 
   let live = false, killedAt = null;
 
@@ -331,22 +331,22 @@
            +  `${done?`<span class="chip">${WROTE[s]}</span>`:'<span></span>'}`
            +  `<span class="t">${at[s]||''}</span></div>`;
       if(killedAt === s){
-        html += `<div class="killrow">Killed — SIGKILL after ${s} · the deal was frozen here</div>`;
+        html += `<div class="killrow">Killed: SIGKILL after ${s} · the deal was frozen here</div>`;
       }
     }
-    if(deal.state === 'DISPUTED') html += `<div class="killrow">DISPUTED — evidence held</div>`;
+    if(deal.state === 'DISPUTED') html += `<div class="killrow">DISPUTED: evidence held</div>`;
     box.innerHTML = html;
   }
 
   function renderState(s){
-    $('dealRef').textContent = s.dealId ? short(s.dealId, 12, 4) : '—';
-    const payerShort = s.deal?.payer ? short(s.deal.payer) : '—';
+    $('dealRef').textContent = s.dealId ? short(s.dealId, 12, 4) : '-';
+    const payerShort = s.deal?.payer ? short(s.deal.payer) : '-';
     $('payer').textContent = payerShort;
     $('payerEdge').textContent = payerShort;
-    $('payto').textContent   = s.deal?.pay_to ? short(s.deal.pay_to) : '—';
+    $('payto').textContent   = s.deal?.pay_to ? short(s.deal.pay_to) : '-';
     $('price').textContent   = s.deal?.price != null ? s.deal.price + ' USDC' : '0.01 USDC';
     $('resource').textContent= (s.resource||'').replace(/^https?:\/\/localhost/,'');
-    $('attested').textContent= s.deal ? (s.deal.attested ? 'Yes · verified' : 'not yet') : '—';
+    $('attested').textContent= s.deal ? (s.deal.attested ? 'Yes · verified' : 'not yet') : '-';
     $('tx').textContent      = short(s.deal?.tx_hash, 10, 6);
     $('nonce').textContent   = short(s.deal?.nonce, 10, 7);
     $('terms').textContent   = short(s.deal?.terms_hash, 8, 4);
@@ -375,11 +375,11 @@
 
   function renderAgent(a){
     const map = {
-      idle:['','Idle'], running:['go','Running'], held:['stop','Held — kill it'],
+      idle:['','Idle'], running:['go','Running'], held:['stop','Held: kill it'],
       killed:['stop','Killed'], resuming:['link','Resuming'], done:['go','Completed'],
       refused:['hold','Refused'],
     };
-    const [cls,label] = map[a] || ['','—'];
+    const [cls,label] = map[a] || ['','-'];
     pill($('agentPill'), cls, label);
     pill($('buyerPill'), cls, label);
     if(!live) return;

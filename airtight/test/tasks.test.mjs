@@ -3,7 +3,7 @@
  *
  * Two things this suite has to prove beyond the happy path:
  *   1. it never touches a payment record, and payments never touch a task one;
- *   2. a real process really killed really resumes — signals are tested by
+ *   2. a real process really killed really resumes: signals are tested by
  *      sending signals to a spawned child, not by calling the handler directly.
  */
 import assert from 'node:assert';
@@ -41,7 +41,7 @@ await t('start opens a task at STARTED, step 0', async () => {
   assert.ok(rec.started_at && rec.last_checkpoint_at);
 });
 
-await t('start is idempotent — calling it every boot is safe', async () => {
+await t('start is idempotent: calling it every boot is safe', async () => {
   const mem = fresh();
   await mem.start('import', { label: 'first' });
   await mem.checkpoint('import', 2);
@@ -158,7 +158,7 @@ await t('the task module writes only state and journal, never an entity', async 
 
 await t('advance records WHAT was done, for agents with no fixed plan', async () => {
   // A pipeline can say "step 5 of 9" because the code defines step 6. A ReAct
-  // loop cannot — "5 actions done" says nothing about which. The journal is
+  // loop cannot: "5 actions done" says nothing about which. The journal is
   // what lets a resuming agent read its own history instead of guessing.
   const mem = fresh();
   await mem.start('agent', { steps: null });          // plan unknown
@@ -228,7 +228,7 @@ await t('a terminated process survives with its progress intact', async () => {
     // Windows has no POSIX signals: Node maps kill('SIGTERM') onto
     // TerminateProcess, so it lands like a SIGKILL and no handler runs. The
     // pre-step checkpoint is what saves the task, which is the design.
-    console.log('      (win32: SIGTERM is uncatchable — pre-step checkpoint carried it)');
+    console.log('      (win32: SIGTERM is uncatchable: pre-step checkpoint carried it)');
   } else {
     assert.match(rec.reason, /signal_SIGTERM/, 'POSIX must annotate the signal');
   }
@@ -246,7 +246,7 @@ await t('an uncaught exception is recorded with its message', async () => {
   assert.strictEqual(rec.step, 1, 'the last survived step is what resumes');
 });
 
-await t('SIGKILL cannot be caught — the pre-step checkpoint is what saves it', async () => {
+await t('SIGKILL cannot be caught: the pre-step checkpoint is what saves it', async () => {
   const root = store();
   const child = spawn(process.execPath, [WORKER, root, 'hard', 'slow'], { stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 900));
@@ -255,7 +255,7 @@ await t('SIGKILL cannot be caught — the pre-step checkpoint is what saves it',
 
   const mem = new TaskMemory(new FileDriver(root));
   const rec = await mem.get('hard');
-  // No handler ran, so there is no reason recorded — but the checkpoints
+  // No handler ran, so there is no reason recorded, but the checkpoints
   // written before each step are still there, which is the whole design.
   assert.ok(rec, 'checkpoints written before the risk must survive a SIGKILL');
   assert.ok(rec.step >= 0);
@@ -334,4 +334,4 @@ await t('task ids are unique and shaped', async () => {
 });
 
 for (const r of roots) { try { fs.rmSync(r, { recursive: true, force: true }); } catch {} }
-console.log(`\nPASS tasks.test — ${passed} groups green`);
+console.log(`\nPASS tasks.test: ${passed} groups green`);

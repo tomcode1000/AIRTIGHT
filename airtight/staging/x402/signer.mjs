@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// signer.mjs — pure-JS Ethereum signing for the x402 demo buyer.
+// signer.mjs: pure-JS Ethereum signing for the x402 demo buyer.
 // Zero dependencies: keccak-256 + secp256k1 (RFC6979) + EIP-3009 typed data.
 // Scope: TESTNET demo buyer only. Never point a funded key at this file.
 //
@@ -249,7 +249,7 @@ export function signTransferWithAuthorization({ privateKey, from, to, valueUsdc,
   ]));
   const digest=keccak256(Buffer.concat([Buffer.from([0x19,0x01]),domainSep,structHash]));
   const {r,s,v}=signDigest(privateKey,digest);
-  // x402 wire format: 65-byte hex string 0x<r(32B)><s(32B)><v(1B)> — NOT an {r,s,v}
+  // x402 wire format: 65-byte hex string 0x<r(32B)><s(32B)><v(1B)>, NOT an {r,s,v}
   // object. The facilitator's viem parser calls .replace() on it (crash if object).
   return {
     authorization:{ from, to, value:value.toString(), validAfter:String(validAfter), validBefore:String(validBefore), nonce:'0x'+nonce.toString('hex') },

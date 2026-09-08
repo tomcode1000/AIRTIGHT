@@ -189,7 +189,7 @@ t('valid signature + wrong bytes = DISPUTED with portable evidence', ()=>{
   assert.ok(r.evidence.tx_hash && r.evidence.terms_hash);
 });
 
-t('DISPUTED is terminal — no action on wake', ()=>{
+t('DISPUTED is terminal: no action on wake', ()=>{
   const r = assessDeal({ deal: dealAt('DISPUTED') });
   assert.strictEqual(r.verdict, VERDICT.DISPUTED);
   assert.strictEqual(r.action, 'none');
@@ -225,4 +225,4 @@ t('transfer blocked whenever the assessment is not RESUME', ()=>{
   assert.strictEqual(g.ok, false);
 });
 
-console.log(`\nPASS resume.test — ${passed} groups green`);
+console.log(`\nPASS resume.test: ${passed} groups green`);

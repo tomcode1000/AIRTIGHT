@@ -1,5 +1,5 @@
 /**
- * AIRTIGHT — Task Checkpointing.
+ * AIRTIGHT: Task Checkpointing.
  *
  * The second module under the layer, independent of Payment Safety. Same
  * principle applied to progress instead of money: write before the risk, so a
@@ -8,16 +8,16 @@
  * ── What Sibyl provides, and what this adds ─────────────────────────────────
  * Sibyl has three tiers and this module uses two of them for what they are for:
  *
- *   HOT   set_state/get_state — "ephemeral working state the agent updates
+ *   HOT   set_state/get_state: "ephemeral working state the agent updates
  *                               frequently · in-flight task list". One row per
  *                               key, overwritten. This is the task's POSITION.
- *   COLD  record_event        — an append-only journal. This is WHAT WAS DONE.
+ *   COLD  record_event: an append-only journal. This is WHAT WAS DONE.
  *
  * Sibyl gives you those places to put things. It does not give you the rules
  * that make a crash survivable, which is what this module is:
  *
  *   · the position is written BEFORE the next risky step, never after
- *   · a checkpoint may not rewind — rewinding is how work runs twice
+ *   · a checkpoint may not rewind: rewinding is how work runs twice
  *   · a finished task refuses further checkpoints
  *   · start() is idempotent, so calling it on every boot is correct
  *   · resume() turns a stored position into "the next thing to do"
@@ -42,7 +42,7 @@ export const TASK_CAT = 'airtight-task';
 /**
  * Index of known task ids.
  *
- * Sibyl's HOT tier is addressed by key and exposes no way to enumerate keys —
+ * Sibyl's HOT tier is addressed by key and exposes no way to enumerate keys,
  * there is set_state and get_state and nothing else. Without an index a caller
  * could read any single task but never ask "what tasks exist", which the
  * operator surfaces need. One extra state row keeps that answer available on
@@ -128,7 +128,7 @@ export class TaskMemory {
       task_id: taskId,
       state: 'STARTED',
       step: 0,
-      total_steps: steps,          // null for an emergent agent — see advance()
+      total_steps: steps,          // null for an emergent agent. See advance()
       label,
       meta,
       reason: null,
@@ -138,7 +138,7 @@ export class TaskMemory {
   }
 
   /**
-   * Record that step N is complete. Call it BEFORE beginning step N+1 — the
+   * Record that step N is complete. Call it BEFORE beginning step N+1: the
    * whole point is that the record exists before the risky work starts.
    *
    * The state row is overwritten, not appended: a task's checkpoint is its
@@ -150,11 +150,11 @@ export class TaskMemory {
    */
   async checkpoint(taskId, step, { label = null, reason = null, meta = null } = {}) {
     const rec = await this.get(taskId);
-    if (!rec) throw new Error(`checkpoint: no task record for ${taskId} — call start() first`);
+    if (!rec) throw new Error(`checkpoint: no task record for ${taskId}. Call start() first`);
     if (rec.state === 'DONE') throw new Error(`checkpoint: task ${taskId} is already DONE`);
     if (!Number.isInteger(step) || step < 0) throw new Error('checkpoint: step must be a non-negative integer');
     if (step < rec.step) {
-      throw new Error(`checkpoint: step ${step} is behind recorded step ${rec.step} — refusing to rewind`);
+      throw new Error(`checkpoint: step ${step} is behind recorded step ${rec.step}: refusing to rewind`);
     }
 
     return this.#put(taskId, {
@@ -178,11 +178,11 @@ export class TaskMemory {
    * can read its own history rather than infer it.
    *
    * @param action  short description of the completed action
-   * @param result  optional payload — a cursor, an id, a summary
+   * @param result  optional payload: a cursor, an id, a summary
    */
   async advance(taskId, { action, result = null, reason = null } = {}) {
     const rec = await this.get(taskId);
-    if (!rec) throw new Error(`advance: no task record for ${taskId} — call start() first`);
+    if (!rec) throw new Error(`advance: no task record for ${taskId}. Call start() first`);
     if (!action) throw new Error('advance: an action description is required');
 
     const step = rec.state === 'STARTED' ? 0 : rec.step + 1;
@@ -222,7 +222,7 @@ export class TaskMemory {
    *   { found, state, step, resumeFrom, reason, record }
    *
    * `resumeFrom` is the next step to run. A task with no record resumes from 0
-   * with found:false — which the caller must treat as "start over", and is
+   * with found:false, which the caller must treat as "start over", and is
    * exactly why anything irreversible belongs behind Payment Safety instead.
    */
   async resume(taskId) {

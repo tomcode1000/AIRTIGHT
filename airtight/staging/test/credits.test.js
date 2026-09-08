@@ -104,7 +104,7 @@ describe('paid-run retry + refund policy', () => {
 
   test('service credit pays for the NEXT request without settlement', async () => {
     resetLedger();
-    // manual mode gate would normally 402 — a credit covers it instead
+    // manual mode gate would normally 402: a credit covers it instead
     process.env.PAYMENT_MODE = 'manual';
     try {
       configurePipelineRunner(async () => ({ gated: [], scored: [], report: { subject: 's' }, outFile: 'x', briefing: 'b', errors: [] }));

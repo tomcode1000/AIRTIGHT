@@ -17,7 +17,7 @@ const deal = {
 const commitment = buildCommitment(deal);
 console.log('committed root:', commitment.root);
 
-// 2. Later — a dispute, an audit — reveal just what's needed.
+// 2. Later: a dispute, an audit: reveal just what's needed.
 const blob = selectDisclosure(commitment, ['price_usdc', 'created_at']);
 
 // 3. The adjudicator verifies against the root they already hold.

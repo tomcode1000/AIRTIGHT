@@ -4,7 +4,7 @@
  * Walks one deal through the lifecycle against a real store, announcing each
  * boundary on stdout so the harness can SIGKILL it at a chosen point. Payment
  * is mocked (PAYMENT_MODE=x402-mock) and every settlement appends a line to a
- * ledger file — the ledger is how we prove, after a kill and a resume, that
+ * ledger file: the ledger is how we prove, after a kill and a resume, that
  * exactly one payment happened.
  *
  * Usage: node buyer-run.mjs <store> <ledger> <dealId> [killAt]
@@ -34,7 +34,7 @@ const PAYLOAD = 'the delivered research report, verbatim';
  * with a visible banner and waits to be killed. It holds forever rather than
  * timing out: the operator, not a timer, decides when the kill lands.
  *
- * This only changes WHEN the process stops, never what it writes — the record
+ * This only changes WHEN the process stops, never what it writes: the record
  * at the moment of the kill is identical either way, which is what keeps the
  * filmed take honest.
  */
@@ -51,7 +51,7 @@ const say = s => {
 };
 
 // The mocked settlement. Appending here is the irreversible act that a real
-// USDC transfer would be — if this file ever gets two lines for one deal, we
+// USDC transfer would be, if this file ever gets two lines for one deal, we
 // double-paid.
 function settle(fingerprint) {
   fs.appendFileSync(ledger, JSON.stringify({ deal: dealId, fingerprint, at: Date.now() }) + '\n');
@@ -68,7 +68,7 @@ if (!deal) {
   // same id would pay them again. Absence of memory is not permission to start
   // over, so resume-only runs refuse instead.
   if (process.env.AIRTIGHT_RESUME_ONLY === '1') {
-    say(`REFUSAL:no verifiable deal state for ${dealId} — refusing to sign or pay`);
+    say(`REFUSAL:no verifiable deal state for ${dealId}: refusing to sign or pay`);
     process.exit(3);
   }
   deal = await mem.open({ dealId, role: 'buyer', terms: TERMS });
@@ -123,7 +123,7 @@ if (deal.state === 'IN_FLIGHT') {
     tx = '0x' + fp.slice(0, 64);
   } else {
     // Not on chain: the settlement never landed, so the deal is unfinished
-    // rather than unsafe. Re-submit the SAME authorisation — the EIP-3009
+    // rather than unsafe. Re-submit the SAME authorisation: the EIP-3009
     // nonce is fixed and the token contract will only honour it once, which
     // makes this retry idempotent. Signing a FRESH nonce here is the
     // double-pay, and is what protocol issue #452 leaves undefined.

@@ -145,7 +145,7 @@ describe('intake server (integration)', () => {
     process.env.PAYMENT_MODE = 'stub'; // restore for later tests
   });
 
-  test('Phase 4: x402-mock flow — 402 challenge → paid retry → settle receipt; standing client bypasses', async () => {
+  test('Phase 4: x402-mock flow: 402 challenge → paid retry → settle receipt; standing client bypasses', async () => {
     process.env.PAYMENT_MODE = 'x402-mock';
     process.env.X402_PAY_TO = '0xABC0000000000000000000000000000000000abc';
     process.env.X402_PRICE_USDC = '25';

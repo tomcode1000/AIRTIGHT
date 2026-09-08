@@ -1,12 +1,12 @@
 /**
- * AIRTIGHT / Payment Safety — an agent that cannot be made to pay twice.
+ * AIRTIGHT / Payment Safety: an agent that cannot be made to pay twice.
  *
  *   import { DealMemory, SibylDriver, signPayment, headerFromStored,
  *            assessDeal, mayTransfer, submitPayment } from 'airtight/payments';
  *
  * The ordering is the product:
  *
- *   1. On wake, ask what you may do — never assume.
+ *   1. On wake, ask what you may do, never assume.
  *        const v = assessDeal({ deal, attestations });
  *        if (v.verdict !== 'RESUME') return;      // REFUSAL, or DISPUTED
  *
@@ -22,7 +22,7 @@
  *        });
  *        await submitPayment(url, signed.header);
  *
- *   4. Killed above? The next run re-submits headerFromStored(...) — the same
+ *   4. Killed above? The next run re-submits headerFromStored(...): the same
  *      nonce, which the token contract honours exactly once.
  *
  * Records live in airtight-deal / -fp / -witness / -att. Independent of Task

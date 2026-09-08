@@ -5,8 +5,8 @@
  * SIGTERM, SIGINT, an uncaught exception, an unhandled rejection.
  *
  * ── What this cannot do, and why it does not matter much ────────────────────
- * SIGKILL, `kill -9`, a pulled plug and an OOM-killer kill are all unobservable
- * — the process simply stops. So these handlers are a convenience, not the
+ * SIGKILL, `kill -9`, a pulled plug and an OOM-killer kill are all unobservable,
+ * the process simply stops. So these handlers are a convenience, not the
  * mechanism. Correctness comes from `checkpoint()` being called BEFORE each
  * risky step; the handlers only add a `reason` for the cases where the process
  * got a moment to speak.
@@ -29,9 +29,9 @@ const DEFAULT_DEADLINE_MS = 1500;
 /**
  * @param mem       a TaskMemory
  * @param taskId    the task to annotate
- * @param step      () => number — the step reached so far, read at crash time
+ * @param step      () => number: the step reached so far, read at crash time
  * @param deadline  ms to allow the final write before exiting anyway
- * @returns { dispose() } — remove the handlers again
+ * @returns { dispose() }: remove the handlers again
  */
 export function installCrashHooks({ mem, taskId, step = () => null, deadline = DEFAULT_DEADLINE_MS, onWrite = null } = {}) {
   if (!mem || !taskId) throw new Error('installCrashHooks: mem and taskId are required');
@@ -69,7 +69,7 @@ export function installCrashHooks({ mem, taskId, step = () => null, deadline = D
    *
    * Registering an uncaughtException listener suppresses Node's default
    * behaviour, so a hook that merely records would convert every crash into a
-   * clean exit 0 — the failure would vanish from logs, exit codes and
+   * clean exit 0: the failure would vanish from logs, exit codes and
    * supervisors. Re-throwing from inside the async handler does not help
    * either: that becomes another rejection, which this same hook then swallows.
    *

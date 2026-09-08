@@ -1,5 +1,5 @@
 // EXCERPT from acquisition-agent src/server/server.js L360-435 (reference only, not standalone-runnable)
- // AIRTIGHT port target: buyer/sign.js — keep host-lock anti-oracle guard verbatim
+ // AIRTIGHT port target: buyer/sign.js. Keep host-lock anti-oracle guard verbatim
         }
         const qa = await answerQuestion(job, payload.question);
         if (qa.error) return send(res, 400, qa);

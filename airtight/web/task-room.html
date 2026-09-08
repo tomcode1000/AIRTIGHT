@@ -173,8 +173,8 @@
       </header>
       <div class="body">
         <div class="row"><span class="k">Task id</span><span class="v" id="taskId">nightly-import</span></div>
-        <div class="row"><span class="k">State</span><span class="v" id="taskState">—</span></div>
-        <div class="row"><span class="k">Last stop</span><span class="v faint" id="taskReason">—</span></div>
+        <div class="row"><span class="k">State</span><span class="v" id="taskState">-</span></div>
+        <div class="row"><span class="k">Last stop</span><span class="v faint" id="taskReason">-</span></div>
         <div class="row"><span class="k">Restarts</span><span class="v" id="restarts">0</span></div>
 
         <div class="field">
@@ -184,7 +184,7 @@
             <option value="2">2 · normalise field names</option>
             <option value="4" selected>4 · enrich from third-party API</option>
             <option value="6">6 · build search index</option>
-            <option value="">don't hold — run to completion</option>
+            <option value="">don't hold. Run to completion</option>
           </select>
         </div>
 
@@ -209,7 +209,7 @@
         </div>
       </div>
       <div class="note warn">
-        Unlike payments, a missing task record is <b>slow, not dangerous</b> — the work is
+        Unlike payments, a missing task record is <b>slow, not dangerous</b>: the work is
         safe to repeat. That is the whole difference between the two modules.
       </div>
     </section>
@@ -220,11 +220,11 @@
     <section class="card">
       <header>
         <h2>Steps</h2>
-        <div class="hr"><span class="pill" id="stepPill"><i></i>—</span></div>
+        <div class="hr"><span class="pill" id="stepPill"><i></i>-</span></div>
       </header>
       <div class="body" id="steps"></div>
       <div class="note">
-        Blue steps were <b>skipped on resume</b> — already recorded as complete, so the
+        Blue steps were <b>skipped on resume</b>: already recorded as complete, so the
         restarted process never ran them again.
       </div>
     </section>
@@ -249,14 +249,14 @@
     <section class="card">
       <header><h2>Task record</h2><div class="hr"><span class="pill" id="recPill"><i></i>HOT state</span></div></header>
       <div class="body">
-        <div class="row"><span class="k">state</span><span class="v" id="rState">—</span></div>
-        <div class="row"><span class="k">step</span><span class="v go" id="rStep">—</span></div>
-        <div class="row"><span class="k">total_steps</span><span class="v" id="rTotal">—</span></div>
-        <div class="row"><span class="k">reason</span><span class="v faint" id="rReason">—</span></div>
-        <div class="row"><span class="k">last_checkpoint_at</span><span class="v faint" id="rAt">—</span></div>
+        <div class="row"><span class="k">state</span><span class="v" id="rState">-</span></div>
+        <div class="row"><span class="k">step</span><span class="v go" id="rStep">-</span></div>
+        <div class="row"><span class="k">total_steps</span><span class="v" id="rTotal">-</span></div>
+        <div class="row"><span class="k">reason</span><span class="v faint" id="rReason">-</span></div>
+        <div class="row"><span class="k">last_checkpoint_at</span><span class="v faint" id="rAt">-</span></div>
       </div>
       <div class="note">
-        One row per task, <b>overwritten</b> not appended — a checkpoint is a position.
+        One row per task, <b>overwritten</b> not appended: a checkpoint is a position.
         When the plan is not known in advance, <b>advance()</b> also appends the action
         and its result to the journal, so a resuming agent reads its own history.
       </div>
@@ -265,14 +265,14 @@
     <section class="card">
       <header><h2>Sibyl tiers</h2><div class="hr"><span class="pill" id="isoPill"><i></i>isolated</span></div></header>
       <div class="body">
-        <div class="cat" id="c-task"><span class="nm">airtight:task:*</span><span class="ct">0</span><span class="ds">HOT state — this module's position</span></div>
-        <div class="cat other" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Entity — Payment Safety, untouched</span></div>
-        <div class="cat other" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Entity — Payment Safety, untouched</span></div>
+        <div class="cat" id="c-task"><span class="nm">airtight:task:*</span><span class="ct">0</span><span class="ds">HOT state; this module's position</span></div>
+        <div class="cat other" id="c-deal"><span class="nm">airtight-deal</span><span class="ct">0</span><span class="ds">Entity: Payment Safety, untouched</span></div>
+        <div class="cat other" id="c-fp"><span class="nm">airtight-fp</span><span class="ct">0</span><span class="ds">Entity: Payment Safety, untouched</span></div>
       </div>
       <div class="note">
         Position lives in Sibyl's <b>HOT state</b> tier, completed actions in the
         <b>COLD journal</b>. Payment Safety writes entity records and never touches
-        either — different tiers, so neither module can reach the other's storage.
+        either: different tiers, so neither module can reach the other's storage.
       </div>
     </section>
   </div>
@@ -304,7 +304,7 @@
       else if (i === current)           { cls = 'now';  tag = 'running'; }
       html += `<div class="step ${cls}"><i class="d"></i><span class="n">${i} &nbsp;${STEPS[i]}</span>`
            +  `${tag ? `<span class="tag">${tag}</span>` : '<span></span>'}</div>`;
-      if (killedAt === i) html += `<div class="killrow">killed here — step ${i} never finished</div>`;
+      if (killedAt === i) html += `<div class="killrow">killed here: step ${i} never finished</div>`;
     }
     $('steps').innerHTML = html;
 
@@ -314,7 +314,7 @@
     }).join('');
 
     pill($('stepPill'), state === 'DONE' ? 'go' : running ? 'hold' : '',
-         rec ? `step ${Math.max(done, 0)} of ${STEPS.length}` : '—');
+         rec ? `step ${Math.max(done, 0)} of ${STEPS.length}` : '-');
   }
 
   function render(s){
@@ -323,13 +323,13 @@
     $('taskId').textContent   = t.id || 'nightly-import';
     $('restarts').textContent = t.restarts ?? 0;
     $('taskState').textContent= rec?.state ?? 'no record';
-    $('taskReason').textContent = rec?.reason ?? '—';
+    $('taskReason').textContent = rec?.reason ?? ': ';
 
-    $('rState').textContent  = rec?.state ?? '—';
-    $('rStep').textContent   = rec ? rec.step : '—';
-    $('rTotal').textContent  = rec?.total_steps ?? '—';
+    $('rState').textContent  = rec?.state ?? ': ';
+    $('rStep').textContent   = rec ? rec.step : '-';
+    $('rTotal').textContent  = rec?.total_steps ?? ': ';
     $('rReason').textContent = rec?.reason ?? 'routine';
-    $('rAt').textContent     = rec?.last_checkpoint_at ? String(rec.last_checkpoint_at).slice(11,19) : '—';
+    $('rAt').textContent     = rec?.last_checkpoint_at ? String(rec.last_checkpoint_at).slice(11,19) : '-';
 
     $('resumeFrom').textContent = t.resumeFrom ?? 0;
     const complete = rec?.state === 'DONE';
@@ -350,9 +350,9 @@
   }
 
   function renderStatus(st){
-    const map = { idle:['','Idle'], running:['go','Running'], held:['stop','Held — kill it'],
+    const map = { idle:['','Idle'], running:['go','Running'], held:['stop','Held: kill it'],
                   killed:['stop','Killed'], done:['go','Complete'], failed:['hold','Failed'] };
-    const [cls,label] = map[st] || ['','—'];
+    const [cls,label] = map[st] || ['','-'];
     pill($('statusPill'), cls, label);
     pill($('taskPill'), cls, label);
     if (!live) return;

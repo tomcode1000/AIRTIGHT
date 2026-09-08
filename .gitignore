@@ -3,7 +3,7 @@ node_modules/
 .env.*
 !.env.example
 
-# Local memory stores — the deletion test wipes these for real
+# Local memory stores: the deletion test wipes these for real
 *.db
 *.sqlite
 *.sqlite3

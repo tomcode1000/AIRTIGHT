@@ -66,7 +66,7 @@ try {
   }
 
   // The buyer holds no ETH; whoever paid gas is the facilitator.
-  console.log(`gas paid by  : ${short(rc.from)}  (facilitator — the buyer holds no ETH)`);
+  console.log(`gas paid by  : ${short(rc.from)}  (facilitator: the buyer holds no ETH)`);
 
   // The claim, checked: what memory stored is what the chain consumed.
   const stored = deal.payment?.x402?.authorization?.nonce;
@@ -76,10 +76,10 @@ try {
     const match = stored.toLowerCase() === burned.toLowerCase();
     console.log(`nonce stored : ${stored}`);
     console.log(`nonce burned : ${burned}`);
-    console.log(`MATCH        : ${match ? 'YES — this payment can never be repeated' : 'NO'}`);
+    console.log(`MATCH        : ${match ? 'YES; this payment can never be repeated' : 'NO'}`);
     if (!match) process.exitCode = 1;
   } else if (!stored) {
-    console.log('nonce stored : (none — this deal predates stored authorisations)');
+    console.log('nonce stored : (none; this deal predates stored authorisations)');
   }
 } finally {
   driver.close?.();

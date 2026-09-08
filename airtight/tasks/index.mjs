@@ -1,5 +1,5 @@
 /**
- * AIRTIGHT / Task Checkpointing — a crashed agent knows how far it got.
+ * AIRTIGHT / Task Checkpointing: a crashed agent knows how far it got.
  *
  *   import { TaskMemory, SibylDriver, installCrashHooks } from 'airtight/tasks';
  *
@@ -21,7 +21,7 @@
  * code path. Install either, or both.
  *
  * Use this for work that is safe to repeat but expensive to repeat. Anything
- * irreversible — money, an email, a delete — belongs behind Payment Safety
+ * irreversible: money, an email, a delete: belongs behind Payment Safety
  * instead, because a task with no record resumes from zero by design.
  */
 export { TaskMemory, TASK_KEY, TASK_EVENT, TASK_INDEX, TASK_CAT, TASK_STATES, newTaskId, memoryPressure } from './checkpoint.mjs';

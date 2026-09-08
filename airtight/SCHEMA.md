@@ -1,12 +1,12 @@
-# AIRTIGHT — Record Schema
+# AIRTIGHT: Record Schema
 
 Two independent modules share one substrate and one principle: write the thing
 that makes recovery possible BEFORE taking the risk.
 
 | Module | Categories | Missing record means |
 |---|---|---|
-| **Payment Safety** | `airtight-deal` · `airtight-fp` · `airtight-witness` · `airtight-att` | **REFUSAL** — never "start over", because starting over is how you pay twice |
-| **Task Checkpointing** | HOT state `airtight:task:*` · journal `airtight-task` | **start from zero** — slow, not dangerous |
+| **Payment Safety** | `airtight-deal` · `airtight-fp` · `airtight-witness` · `airtight-att` | **REFUSAL**, never "start over", because starting over is how you pay twice |
+| **Task Checkpointing** | HOT state `airtight:task:*` · journal `airtight-task` | **start from zero**: slow, not dangerous |
 
 The two modules use **different Sibyl tiers**, which is a stronger boundary than
 a naming convention: Payment Safety writes entity records, Task Checkpointing
@@ -15,7 +15,7 @@ storage even by building a key wrong.
 
 ---
 
-# Payment Safety — Deal Record Schema v1 (locked Aug 25, pre-window)
+# Payment Safety: Deal Record Schema v1 (locked Aug 25, pre-window)
 
 Storage substrate: Sibyl Memory MCP (`memory_remember/recall/search/list`).
 Verified shapes from spikes: `memory_remember{category, name, body}` · structured
@@ -60,10 +60,10 @@ dict bodies round-trip intact across processes · works pre-activation.
 - **category:** `airtight-fp`
 - **name:** `<fingerprint>` (the sha256 above)
 - **body:** `{"deal_id": ..., "consumed_at": <iso>}`
-- Lookup is O(1) by exact name via `memory_recall` — replaces acquisition-agent's
+- Lookup is O(1) by exact name via `memory_recall`: replaces acquisition-agent's
   in-memory Map ("restart clears it" admission = our thesis proof).
 
-### 3. Disclosure witness (private — never shared)
+### 3. Disclosure witness (private, never shared)
 - **category:** `airtight-witness`
 - **name:** `<deal_id>`
 - **body:** `{"v":1, "root":"hex", "fields":[{"key":..., "value":..., "nonce":"32 hex"}]}`
@@ -77,7 +77,7 @@ dict bodies round-trip intact across processes · works pre-activation.
 ### 4. Notarized attestation
 - **category:** `airtight-att`
 - **name:** `<deal_id>:<kind>` where kind ∈ `prompt | result | delivery`
-- **body:** the object returned by `notarize()` —
+- **body:** the object returned by `notarize()`,
   `{v, dealId, role, kind, termsHash, merkleRoot, payloadHash, issuedAt, chainId, signer, signature, digest}`
 - Signed EIP-712 by the **same key that pays**, so an adjudicator can tie the
   attestation to the on-chain payer address without trusting either agent.
@@ -120,7 +120,7 @@ The single rule (`resume.mjs`): **you can only dispute what someone signed.**
 | Situation | Verdict | Why |
 |---|---|---|
 | Valid counterparty signature, contradicted by reality | `DISPUTED` | Provable to a third party using their own signature |
-| Record absent, incoherent, or hash won't recompute | `REFUSAL` | Could be our own memory corrupted — cannot attribute |
+| Record absent, incoherent, or hash won't recompute | `REFUSAL` | Could be our own memory corrupted: cannot attribute |
 | Attestation signature fails to verify | `REFUSAL` | A forgery and a bit-flip in our store look identical |
 | Bytes mismatch our record, no attestation exists | `REFUSAL` | Nobody to attribute the mismatch to |
 | `tx_hash` recorded but not found on chain | `REFUSAL` | Unconfirmed ≠ fraudulent; never re-send on doubt |
@@ -147,13 +147,13 @@ Any of these ⇒ treat record as absent ⇒ REFUSAL (never guess):
 - **Never put `airtight-witness` bodies in a disclosure blob.** Only
   `selectDisclosure()` output leaves the process; it carries the disclosed
   fields' nonces and nothing else. Withheld leaf hashes DO appear inside proof
-  siblings — that is safe because leaves are blinded, and only because of that.
-- `memory_forget` archives only — demo deletion beat must wipe the db path for real.
+  siblings; that is safe because leaves are blinded, and only because of that.
+- `memory_forget` archives only: demo deletion beat must wipe the db path for real.
 
 
 ---
 
-# Task Checkpointing — Schema v1
+# Task Checkpointing: Schema v1
 
 For work that is safe to repeat but expensive to repeat. Anything irreversible
 belongs behind Payment Safety instead: a task with no record resumes from zero
@@ -163,8 +163,8 @@ Sibyl has three tiers and this module uses two of them for what they are for:
 
 | Tier | Call | Holds |
 |---|---|---|
-| **HOT** | `set_state` / `get_state` | the task's **position** — one row per task, overwritten |
-| **COLD** | `record_event` | **what was done** — append-only, for agents with no fixed plan |
+| **HOT** | `set_state` / `get_state` | the task's **position**: one row per task, overwritten |
+| **COLD** | `record_event` | **what was done**: append-only, for agents with no fixed plan |
 
 Sibyl provides those places. What this module adds is the discipline that makes
 a crash survivable: the position is written before the next risky step, a
@@ -172,7 +172,7 @@ checkpoint may not rewind, a finished task refuses further writes, `start()` is
 idempotent, and `resume()` turns a stored position into the next thing to do.
 The same relationship a write-ahead log has to `fwrite`.
 
-### Task position — HOT tier
+### Task position: HOT tier
 - **key:** `airtight:task:<task_id>`
 - **body** (dict):
 
@@ -198,7 +198,7 @@ current position, and a history would grow without bound on a long job.
 
 | Rule | Enforcement |
 |---|---|
-| Checkpoint before the risk | `checkpoint(id, n)` is called before step n+1 begins — the only thing that survives SIGKILL |
+| Checkpoint before the risk | `checkpoint(id, n)` is called before step n+1 begins: the only thing that survives SIGKILL |
 | No rewinding | a checkpoint behind the recorded step is refused; rewinding is how work runs twice |
 | Idempotent start | `start()` returns the existing record untouched, so calling it every boot is correct |
 | Resume, don't restart | `resume()` returns `resumeFrom`, the next step to run |
@@ -213,28 +213,28 @@ the checkpoint was routine.
 ### What crash hooks can and cannot do
 
 `installCrashHooks()` annotates the failures a process can observe. It cannot
-catch SIGKILL, an OOM kill, or power loss — those stop the process outright.
+catch SIGKILL, an OOM kill, or power loss: those stop the process outright.
 **On Windows there are no POSIX signals at all**: Node maps `kill('SIGTERM')`
 onto `TerminateProcess`, so a SIGTERM there behaves exactly like a SIGKILL and
 no handler runs. Exceptions and unhandled rejections are still captured.
 
 This is why the checkpoint goes *before* the step and the hooks are only an
-annotation. The hooks also re-raise what they caught — a handler that recorded
+annotation. The hooks also re-raise what they caught: a handler that recorded
 and swallowed would turn every crash into a clean exit 0.
 
 
-### Task history — COLD tier
+### Task history: COLD tier
 - **kind:** `airtight-task`
 - **body:** `{task_id, step, action, result, at}`
 - Appended by `advance()`, one event per completed action.
 
-For a pipeline, "step 5 of 9 done" is enough — the code defines step 6. For an
+For a pipeline, "step 5 of 9 done" is enough: the code defines step 6. For an
 emergent agent (a ReAct loop deciding its next action from the last result),
 "5 actions done" says nothing about *which*, so the position alone cannot tell
 it what to skip. The journal is what lets such an agent read its own history
 rather than infer it.
 
-### Task index — HOT tier
+### Task index: HOT tier
 - **key:** `airtight:task:index`
 - **body:** `{v: 1, ids: [...]}`
 - Sibyl's HOT tier exposes `set_state` and `get_state` and no key listing, so

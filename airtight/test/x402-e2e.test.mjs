@@ -2,7 +2,7 @@
  * End-to-end x402: real 402 challenge, real EIP-3009 signing, real HTTP.
  *
  * Runs against a live seller process with PAYMENT_MODE=x402-mock, so the
- * protocol path is exercised for real while settlement is faked — no funds and
+ * protocol path is exercised for real while settlement is faked: no funds and
  * no network needed. The same code paths run against the facilitator when
  * PAYMENT_MODE is unset; only verify/settle change.
  *
@@ -32,12 +32,12 @@ const PAY_TO = deriveAddress('0x' + '22'.repeat(32));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-x402-'));
 
 // This suite deliberately pays TWICE, to show what signing a fresh nonce costs.
-// Harmless against a mock facilitator, real money against a live one — so it
+// Harmless against a mock facilitator, real money against a live one, so it
 // defaults to mock and refuses only when live was explicitly asked for. A
 // silent skip during `npm test` would be worse than either.
 if (process.env.PAYMENT_MODE === undefined) process.env.PAYMENT_MODE = 'x402-mock';
 if (process.env.PAYMENT_MODE !== 'x402-mock') {
-  console.log(`SKIP x402-e2e.test — PAYMENT_MODE=${process.env.PAYMENT_MODE} would spend real USDC (this suite double-pays on purpose)`);
+  console.log(`SKIP x402-e2e.test: PAYMENT_MODE=${process.env.PAYMENT_MODE} would spend real USDC (this suite double-pays on purpose)`);
   process.exit(0);
 }
 
@@ -127,7 +127,7 @@ try {
     assert.strictEqual(after, before, 'a replay must not settle again');
   });
 
-  await t('signing AGAIN yields a different nonce — this is the double-pay', async () => {
+  await t('signing AGAIN yields a different nonce; this is the double-pay', async () => {
     const second = signPayment({ privateKey: BUYER_KEY, requirements: challenge });
     assert.notStrictEqual(second.stored.authorization.nonce, signed.stored.authorization.nonce);
     assert.notStrictEqual(second.fingerprint, signed.fingerprint);
@@ -135,7 +135,7 @@ try {
     // now paid twice for one deal. Only re-submitting the STORED authorisation
     // is safe, and only memory can hold it across a crash.
     const r = await submitPayment(URL_, second.header);
-    assert.strictEqual(r.status, 200, 'a fresh nonce settles again — the failure memory prevents');
+    assert.strictEqual(r.status, 200, 'a fresh nonce settles again: the failure memory prevents');
   });
 
   await t('an incomplete stored payment refuses to re-sign', async () => {
@@ -160,4 +160,4 @@ try {
   }
 }
 
-console.log(`\nPASS x402-e2e.test — ${passed} groups green`);
+console.log(`\nPASS x402-e2e.test: ${passed} groups green`);

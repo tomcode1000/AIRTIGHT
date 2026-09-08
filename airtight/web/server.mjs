@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AIRTIGHT Deal Room — local server.
+ * AIRTIGHT Deal Room: local server.
  *
  * Serves the Deal Room and wires its buttons to the real thing: it spawns the
  * actual buyer agent, SIGKILLs the actual process, and deletes the actual Sibyl
@@ -121,7 +121,7 @@ function runTask({ hold = null } = {}) {
 /* ── spawn the real buyer ────────────────────────────────────────────── */
 function runBuyer({ hold = null, resumeOnly = false } = {}) {
   if (state.child) return { ok: false, error: 'an agent is already running' };
-  if (!process.env.DEMO_BUYER_KEY) return { ok: false, error: 'DEMO_BUYER_KEY is not set — load .env first' };
+  if (!process.env.DEMO_BUYER_KEY) return { ok: false, error: 'DEMO_BUYER_KEY is not set: load .env first' };
 
   const env = { ...process.env };
   if (hold) env.AIRTIGHT_HOLD_AT = hold; else delete env.AIRTIGHT_HOLD_AT;
@@ -315,7 +315,7 @@ const server = http.createServer(async (req, res) => {
 
   if (p === '/api/resume' && req.method === 'POST') {
     if (!state.dealId) return json(res, 409, { ok: false, error: 'no deal to resume' });
-    log('cold restart — reading state from memory', 'meta');
+    log('cold restart: reading state from memory', 'meta');
     setAgent('resuming');
     const r = runBuyer({ hold: null, resumeOnly: true });
     pushState();
@@ -326,7 +326,7 @@ const server = http.createServer(async (req, res) => {
     const body = await readBody(req);
     if (task.child) return json(res, 409, { ok: false, error: 'the task is already running' });
     if (body.fresh) {
-      // A finished task must not be "resumed" into completion again — a fresh
+      // A finished task must not be "resumed" into completion again: a fresh
       // run means step 0, so the old record is cleared first.
       task.log = []; task.restarts = 0; send('tclear', {});
       const d = newDriver();
@@ -347,13 +347,13 @@ const server = http.createServer(async (req, res) => {
 
   if (p === '/api/task/wipe' && req.method === 'POST') {
     // Deletes ONLY the task record. Payment records are a different category
-    // and must be untouched — the page shows both counts to prove it.
+    // and must be untouched: the page shows both counts to prove it.
     if (task.child) task.child.kill('SIGKILL');
     const driver = newDriver();
     try {
       const tmem = new TaskMemory(driver);
       await tmem.forget(task.id);
-      tlog('task memory deleted — the next run starts from step 0', 'refusal');
+      tlog('task memory deleted: the next run starts from step 0', 'refusal');
     } finally { driver.close?.(); }
     task.restarts = 0;
     await pushState();
@@ -371,7 +371,7 @@ const server = http.createServer(async (req, res) => {
         try { if (fs.existsSync(f)) { fs.rmSync(f, { force: true }); removed++; } } catch {}
       }
     }
-    log(`memory deleted — ${removed} file(s) removed`, 'refusal');
+    log(`memory deleted: ${removed} file(s) removed`, 'refusal');
     log('the agent can no longer verify any deal', 'refusal');
     await pushState();
     return json(res, 200, { ok: true, removed });
@@ -383,7 +383,7 @@ const server = http.createServer(async (req, res) => {
 
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
-    console.error(`\nPort ${PORT} is already in use — another Deal Room is running.\n`);
+    console.error(`\nPort ${PORT} is already in use: another Deal Room is running.\n`);
     console.error(`  stop it : taskkill //PID <pid> //F     (kill <pid> elsewhere)`);
     console.error(`  or run  : DEAL_ROOM_PORT=${PORT + 1} node web/server.mjs\n`);
     process.exit(1);
@@ -397,5 +397,5 @@ server.listen(PORT, () => {
   console.log(`  /room  ·  /tasks  ·  /slides`);
   console.log(`  seller   ${RESOURCE}`);
   console.log(`  memory   ${USE_FILE ? 'file:' + (process.env.AIRTIGHT_STORE || '.airtight-memory') : 'sibyl:' + DB}`);
-  console.log(`  buyer    ${process.env.DEMO_BUYER_KEY ? 'key loaded' : 'NO KEY — run . .\\scripts\\env.ps1 first'}`);
+  console.log(`  buyer    ${process.env.DEMO_BUYER_KEY ? 'key loaded' : 'NO KEY. Run . .\\scripts\\env.ps1 first'}`);
 });

@@ -137,7 +137,7 @@ t('malleated (high-s) signature is rejected', ()=>{
 t('off-curve r does not recover', ()=>{
   const digest = Buffer.alloc(32, 7);
   // x=5 has no y on secp256k1 (5^3+7 is a non-residue mod p). recoverYfromX
-  // returns a bogus root for such x, so recovery must reject it explicitly —
+  // returns a bogus root for such x, so recovery must reject it explicitly,
   // otherwise a forged r yields a real-looking address.
   const r = '0x' + '0'.repeat(63) + '5';
   assert.strictEqual(recoverAddress(digest, { r, s: '0x' + '1'.repeat(64), v: 27 }), null);
@@ -178,7 +178,7 @@ t('an attestation signature is not a valid transfer authorization', ()=>{
     verifyingContract: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   });
   // Recovering the attestation signature against the TRANSFER digest yields
-  // some address, but never the payer's — so USDC would reject it.
+  // some address, but never the payer's, so USDC would reject it.
   const m = /^0x([0-9a-f]{64})([0-9a-f]{64})([0-9a-f]{2})$/i.exec(att.signature);
   const rec = recoverAddress(Buffer.from(transfer._digest, 'hex'), {
     r: '0x' + m[1], s: '0x' + m[2], v: parseInt(m[3], 16),
@@ -197,4 +197,4 @@ t('bad inputs are refused, not silently signed', ()=>{
   assert.throws(()=>notarize(base({ termsHash: undefined })), /termsHash must be 32 bytes/);
 });
 
-console.log(`\nPASS notary.test — ${passed} groups green`);
+console.log(`\nPASS notary.test: ${passed} groups green`);

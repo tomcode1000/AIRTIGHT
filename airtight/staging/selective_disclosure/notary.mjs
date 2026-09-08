@@ -1,5 +1,5 @@
 /**
- * AIRTIGHT — notarization of agent work (prompt / result / delivered content).
+ * AIRTIGHT: notarization of agent work (prompt / result / delivered content).
  *
  * Binds a piece of work to the deal that paid for it, signed by the SAME key
  * that pays. An adjudicator can therefore tie an attestation to the on-chain
@@ -85,7 +85,7 @@ function attestationDigest({ dealId, role, kind, termsHash, merkleRoot, payloadH
  * Notarize one artifact of a deal.
  *
  * @param privateKey  0x-prefixed, from env. NEVER from Sibyl Memory.
- * @param merkleRoot  root from buildCommitment() — ties the attestation to the
+ * @param merkleRoot  root from buildCommitment(): ties the attestation to the
  *                    selectively-disclosable record without revealing it.
  * @returns an attestation record safe to store in Sibyl Memory and to hand to a
  *          counterparty. Contains no key material and no plaintext payload.
@@ -122,7 +122,7 @@ export function notarize({ privateKey, dealId, role, kind, termsHash, merkleRoot
 /**
  * Verify an attestation. Returns { ok, signer, reason }.
  *
- * @param expect optional bindings the caller already trusts — typically
+ * @param expect optional bindings the caller already trusts: typically
  *               { signer, termsHash, merkleRoot, payloadHash, dealId }. Checking
  *               these is what turns "a valid signature by someone" into "the
  *               payer attested to THIS payload for THIS deal".

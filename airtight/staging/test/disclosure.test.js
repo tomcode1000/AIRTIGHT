@@ -51,7 +51,7 @@ t('blob reveals only the selected fields', ()=>{
 
   // The serialized blob must not leak withheld values or their nonces.
   //
-  // Withheld LEAF HASHES do appear — a Merkle proof is made of sibling hashes,
+  // Withheld LEAF HASHES do appear: a Merkle proof is made of sibling hashes,
   // so any withheld field adjacent to a disclosed one is on the wire by
   // construction. That is safe only because leaves are blinded: a bare leaf
   // hash without its 128-bit nonce reveals nothing (see the brute-force test
@@ -158,4 +158,4 @@ t('selecting an absent field throws', ()=>{
   assert.throws(()=>selectDisclosure(c, ['nope']), /no such field/);
 });
 
-console.log(`\nPASS disclosure.test — ${passed} assertions groups green`);
+console.log(`\nPASS disclosure.test: ${passed} assertions groups green`);

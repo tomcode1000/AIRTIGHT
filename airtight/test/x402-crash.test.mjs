@@ -2,8 +2,8 @@
  * The claim, end to end: kill the buyer at every boundary of a REAL x402 deal
  * and prove the seller settles exactly once.
  *
- * Unlike the mock chaos suite, this drives the full protocol — 402 challenge,
- * EIP-3009 signature, HTTP payment, settlement receipt — against a live seller
+ * Unlike the mock chaos suite, this drives the full protocol: 402 challenge,
+ * EIP-3009 signature, HTTP payment, settlement receipt: against a live seller
  * process. Settlement is mocked at the facilitator only, so no funds are moved;
  * every other byte is the real path.
  *
@@ -69,7 +69,7 @@ function runBuyer(store, dealId, killAt = null) {
 const settlementsFor = payer => (sellerLog.match(/settled /g) || []).length;
 
 let passed = 0, failed = 0;
-console.log('x402 crash suite — real protocol, killed at every boundary\n');
+console.log('x402 crash suite: real protocol, killed at every boundary\n');
 
 for (const boundary of BOUNDARIES) {
   const store = path.join(tmp, 'buyer-' + boundary.replace(/\W/g, '_'));
@@ -104,5 +104,5 @@ for (let i = 0; i < 10; i++) {
   try { fs.rmSync(tmp, { recursive: true, force: true }); break; }
   catch { await new Promise(r => setTimeout(r, 200)); }
 }
-console.log(`\n${failed ? 'FAIL' : 'PASS'} x402-crash.test — ${passed} passed, ${failed} failed`);
+console.log(`\n${failed ? 'FAIL' : 'PASS'} x402-crash.test: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

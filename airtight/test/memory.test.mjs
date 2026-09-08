@@ -273,4 +273,4 @@ await t('a tampered stored record refuses on wake', async ()=>{
 });
 
 for(const r of roots) { try { fs.rmSync(r, { recursive: true, force: true }); } catch {} }
-console.log(`\nPASS memory.test — ${passed} groups green`);
+console.log(`\nPASS memory.test: ${passed} groups green`);

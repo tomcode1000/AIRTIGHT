@@ -1,5 +1,5 @@
 /**
- * Sibyl Memory driver — the real substrate.
+ * Sibyl Memory driver: the real substrate.
  *
  * Same interface as `driver-file.mjs`, so agent code is identical either way.
  * Writes go through the MCP server over stdio JSON-RPC, because that is the
@@ -25,7 +25,7 @@ const DEFAULT_DB = path.join(os.homedir(), '.sibyl-memory', 'memory.db');
 export class SibylDriver {
   /**
    * @param bin  path to the sibyl-memory-mcp executable
-   * @param db   optional SIBYL_MEMORY_DB override — the server honours it, and
+   * @param db   optional SIBYL_MEMORY_DB override: the server honours it, and
    *             tests must use it so they never touch the user's real store
    */
   constructor({ bin = 'sibyl-memory-mcp', db = null, timeoutMs = 15000 } = {}) {
@@ -92,7 +92,7 @@ export class SibylDriver {
     });
   }
 
-  /** Sentinel for a genuine miss. Never conflated with a failure — see below. */
+  /** Sentinel for a genuine miss. Never conflated with a failure. See below. */
   static NOT_FOUND = Symbol('NOT_FOUND');
 
   async #call(name, args) {
@@ -122,7 +122,7 @@ export class SibylDriver {
       // existing, already-paid deal as a fresh one and pay the seller twice.
       // Every other code must surface as a failure so the caller REFUSES.
       if (code === 'NOT_FOUND') return SibylDriver.NOT_FOUND;
-      throw new Error(`sibyl ${name}: ${code} — ${parsed?.message ?? String(text).slice(0, 200)}`);
+      throw new Error(`sibyl ${name}: ${code}: ${parsed?.message ?? String(text).slice(0, 200)}`);
     }
 
     if (parsed == null) throw new Error(`sibyl ${name}: unparseable response`);
@@ -191,7 +191,7 @@ export class SibylDriver {
 
   /**
    * Archive, not erase. `memory_forget` is a soft delete by design, so this
-   * cannot stand in for the deletion test — see `destroyAll`.
+   * cannot stand in for the deletion test. See `destroyAll`.
    */
   async remove(category, name, reason = 'airtight remove') {
     const r = await this.#call('memory_forget', { category, name, reason });

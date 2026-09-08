@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * A long job, built to be killed — the Task Checkpointing demo.
+ * A long job, built to be killed: the Task Checkpointing demo.
  *
  * Nine steps of a plausible pipeline. Each one is slow enough to be interrupted,
  * and each is checkpointed the moment it completes, which is before the next one
@@ -54,14 +54,14 @@ try {
     say(`START ${taskId} · ${STEPS.length} steps`);
   }
 
-  // 2. Annotate the failures we can observe. Not the mechanism — see guard.mjs.
+  // 2. Annotate the failures we can observe. Not the mechanism. See guard.mjs.
   installCrashHooks({ mem, taskId, step: () => (done >= 0 ? done : null) });
 
   for (let i = resumeFrom; i < STEPS.length; i++) {
     say(`STEP ${i} ${STEPS[i]}`);
 
     if (holdAt === i) {
-      say(`HOLD at step ${i} — kill -9 ${process.pid}`);
+      say(`HOLD at step ${i}: kill -9 ${process.pid}`);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
     }
 

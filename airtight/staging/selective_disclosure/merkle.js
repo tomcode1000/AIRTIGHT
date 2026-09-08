@@ -26,8 +26,8 @@ export function canonical(value){
   return `{${keys.map(k=>`${JSON.stringify(k)}:${canonical(value[k])}`).join(',')}}`;
 }
 
-// Blinded leaf. Without the nonce a low-entropy field — a price, an address
-// from a known set, a URL — is brute-forceable straight out of its hash, which
+// Blinded leaf. Without the nonce a low-entropy field: a price, an address
+// from a known set, a URL: is brute-forceable straight out of its hash, which
 // defeats the point of withholding it.
 export function leafHash(key, value, nonce){
   return sha256(
@@ -97,7 +97,7 @@ export function verifyProof(leafHashBuf, proof, rootHex){
  * holder: it carries every nonce and every leaf hash. Only what
  * `selectDisclosure` returns is safe to hand to a counterparty.
  *
- * Store `root` — and nothing else from here — in the deal record.
+ * Store `root`, and nothing else from here: in the deal record.
  */
 export function buildCommitment(obj){
   const keys = Object.keys(obj).sort();
@@ -121,7 +121,7 @@ export function buildCommitment(obj){
 
 /**
  * Produce the shareable blob revealing only `fields`. Undisclosed leaf hashes
- * and nonces never leave the holder — a recipient learns the field count (tree
+ * and nonces never leave the holder: a recipient learns the field count (tree
  * shape) and nothing else about the withheld contents.
  */
 export function selectDisclosure(commitment, fields){

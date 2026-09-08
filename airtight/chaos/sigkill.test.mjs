@@ -1,8 +1,8 @@
 /**
- * SIGKILL chaos suite — the load-bearing gate.
+ * SIGKILL chaos suite: the load-bearing gate.
  *
  * For every boundary in the deal lifecycle: spawn a real buyer process, kill it
- * with SIGKILL (no handlers, no flush, no cleanup — the process simply stops)
+ * with SIGKILL (no handlers, no flush, no cleanup: the process simply stops)
  * the instant it announces that boundary, then spawn a fresh process over the
  * same store and let it finish.
  *
@@ -45,7 +45,7 @@ const ledgerLines = ledger =>
 let passed = 0, failed = 0;
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'airtight-chaos-'));
 
-console.log('SIGKILL chaos suite — killing a real process at every boundary\n');
+console.log('SIGKILL chaos suite: killing a real process at every boundary\n');
 
 for (const boundary of BOUNDARIES) {
   const store = path.join(tmp, boundary.replace(/\W/g, '_'));
@@ -55,7 +55,7 @@ for (const boundary of BOUNDARIES) {
   const first = await run(store, ledger, dealId, boundary);
   const linesAfterKill = ledgerLines(ledger).length;
 
-  // Respawn cold. New process, no shared state — only what reached the store.
+  // Respawn cold. New process, no shared state, only what reached the store.
   const second = await run(store, ledger, dealId);
   const lines = ledgerLines(ledger);
   const deal = await new DealMemory(new FileDriver(store)).get(dealId);
@@ -98,5 +98,5 @@ for (const boundary of BOUNDARIES) {
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });
-console.log(`\n${failed ? 'FAIL' : 'PASS'} sigkill.test — ${passed} passed, ${failed} failed`);
+console.log(`\n${failed ? 'FAIL' : 'PASS'} sigkill.test: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

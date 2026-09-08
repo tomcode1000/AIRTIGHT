@@ -1,5 +1,5 @@
 /**
- * AIRTIGHT — resume-on-wake assessment.
+ * AIRTIGHT: resume-on-wake assessment.
  *
  * A cold agent reads its own deal record and must answer one question before it
  * touches money: what, if anything, may I safely do next?
@@ -9,8 +9,8 @@
  * That is evidence: they signed for payload X, they delivered Y, both facts are
  * provable to a third party.
  *
- * Everything else — a missing record, a hash that will not recompute, an
- * attestation whose signature does not verify — is indistinguishable from our
+ * Everything else: a missing record, a hash that will not recompute, an
+ * attestation whose signature does not verify: is indistinguishable from our
  * OWN memory having been corrupted or tampered with. We cannot tell a forgery
  * from a bit-flip in our store, so we fail closed: REFUSAL, act on nothing.
  *
@@ -40,7 +40,7 @@ const REQUIRED = {
   CLOSED:    d => !!d.delivery?.payload_sha256,
 };
 
-// The next action for a buyer waking at each state. IN_FLIGHT never re-signs —
+// The next action for a buyer waking at each state. IN_FLIGHT never re-signs,
 // that is the double-pay window the whole project exists to close.
 const NEXT_ACTION = {
   INTENT:    'request-quote',
@@ -67,7 +67,7 @@ const dispute = (reason, evidence) => ({ verdict: VERDICT.DISPUTED, reason, evid
  * @param deal          the `airtight-deal` record, or null/undefined if absent
  * @param attestations  { [kind]: attestation } from `airtight-att`
  * @param delivered     Buffer|string actually received, if any
- * @param onChain       { txFound: bool|null } — null = not yet checked
+ * @param onChain       { txFound: bool|null }: null = not yet checked
  * @param counterparty  address we expect to have signed delivery attestations
  */
 export function assessDeal({ deal, attestations = {}, delivered = null, onChain = {}, counterparty = null } = {}) {
@@ -85,17 +85,17 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
     if (REQUIRED[s] && !REQUIRED[s](deal)) return refuse(`state ${deal.state} missing fields required by ${s}`);
   }
   if (termsHash(deal.terms) !== String(deal.terms_hash).toLowerCase()) {
-    return refuse('terms_hash does not recompute — record altered');
+    return refuse('terms_hash does not recompute: record altered');
   }
   if (deal.disclosure?.merkle_root != null && !/^[0-9a-f]{64}$/i.test(deal.disclosure.merkle_root)) {
     return refuse('disclosure.merkle_root malformed');
   }
 
   // ── 3. Payment-side consistency ──────────────────────────────────────────
-  // A settled payment we cannot find on chain is not evidence of fraud — it is
+  // A settled payment we cannot find on chain is not evidence of fraud; it is
   // us being unable to confirm our own state. Refuse rather than re-send.
   if (idx >= ORDER.indexOf('PAID') && onChain.txFound === false) {
-    return refuse('recorded tx_hash not found on chain — refusing to act on unconfirmed payment');
+    return refuse('recorded tx_hash not found on chain: refusing to act on unconfirmed payment');
   }
 
   // ── 4. Attestations ──────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
     // A counterparty's attestation is signed over THEIR record, so their
     // termsHash and merkleRoot are values we cannot reconstruct and must not
     // claim to know. The one identifier both sides derive identically is the
-    // payment fingerprint — that is what a cross-party signature binds, and so
+    // payment fingerprint; that is what a cross-party signature binds, and so
     // it is all we may check, alongside the address we expect to have signed.
     //
     // Our own attestations are over our own record, so the local deal id and
@@ -135,7 +135,7 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
     const actual = payloadHash(delivered);
 
     // The counterparty SIGNED for a payload. What arrived is not it. Their own
-    // signature is the evidence — this is the dispute case.
+    // signature is the evidence; this is the dispute case.
     if (deliveryAtt && deliveryAtt.payloadHash.toLowerCase() !== actual) {
       return dispute('delivered bytes do not match the signed attestation', {
         deal_id: deal.deal_id,
@@ -157,7 +157,7 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
   }
 
   // Paid, and they signed for a delivery we never recorded receiving: still not
-  // a dispute — we may simply have died before writing. Resume and re-fetch.
+  // a dispute; we may simply have died before writing. Resume and re-fetch.
   return { verdict: VERDICT.RESUME, from: deal.state, action: NEXT_ACTION[deal.state] };
 }
 
@@ -168,7 +168,7 @@ export function assessDeal({ deal, attestations = {}, delivered = null, onChain 
 export function mayTransfer({ deal, assessment, fingerprintConsumed = false }) {
   if (!assessment || assessment.verdict !== VERDICT.RESUME) return { ok: false, reason: 'assessment does not permit action' };
   if (deal.state !== 'AUTHORIZED') return { ok: false, reason: `transfer only from AUTHORIZED, not ${deal.state}` };
-  if (fingerprintConsumed) return { ok: false, reason: 'payment fingerprint already consumed — would double-pay' };
+  if (fingerprintConsumed) return { ok: false, reason: 'payment fingerprint already consumed: would double-pay' };
   return { ok: true };
 }
 

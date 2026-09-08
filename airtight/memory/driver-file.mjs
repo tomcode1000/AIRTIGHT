@@ -1,5 +1,5 @@
 /**
- * Local memory driver — durable, dependency-free, crash-safe.
+ * Local memory driver: durable, dependency-free, crash-safe.
  *
  * Stands in for Sibyl Memory during development, chaos testing and offline
  * work, and is the substrate the SIGKILL harness runs against. Same record
@@ -14,7 +14,7 @@
  * MoveFileEx with MOVEFILE_REPLACE_EXISTING).
  *
  * Without the fsync before rename, the rename can land while the file's bytes
- * are still in the page cache — the record would be present but empty after a
+ * are still in the page cache: the record would be present but empty after a
  * power loss. That is exactly the failure this project claims to prevent.
  */
 import fs from 'node:fs';
@@ -47,7 +47,7 @@ export class FileDriver {
 
   #fsyncDir(dir) {
     // Directory entries need their own fsync, or the rename may not survive.
-    // Not supported on every Windows filesystem — a failure here does not
+    // Not supported on every Windows filesystem: a failure here does not
     // invalidate the file's own fsync, so it is non-fatal.
     let fd;
     try { fd = fs.openSync(dir, 'r'); fs.fsyncSync(fd); } catch { /* best effort */ }

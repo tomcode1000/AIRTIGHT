@@ -4,7 +4,7 @@
  *
  * Keys are printed to stdout and never written to a tracked file. `.env` is
  * gitignored; nothing here may reach the repo. These are throwaway testnet
- * wallets — do not reuse them for anything holding real value.
+ * wallets. Do not reuse them for anything holding real value.
  */
 import crypto from 'node:crypto';
 import { deriveAddress } from '../staging/x402/signer.mjs';
@@ -30,12 +30,12 @@ console.log(`# --- AIRTIGHT demo burners (testnet only) ---
 X402_NETWORK=base-sepolia
 PAYMENT_MODE=x402-mock          # flip to x402-live for the real settle
 
-# Buyer — needs Base Sepolia USDC ONLY. No ETH: the buyer signs an EIP-3009
+# Buyer: needs Base Sepolia USDC ONLY. No ETH: the buyer signs an EIP-3009
 # authorisation offline and never broadcasts; the facilitator submits and pays gas.
 DEMO_BUYER_KEY=${buyer.key}
 DEMO_BUYER_ADDRESS=${buyer.address}
 
-# Seller — receives the USDC. Only the ADDRESS is needed to run the seller.
+# Seller: receives the USDC. Only the ADDRESS is needed to run the seller.
 X402_PAY_TO=${seller.address}
 DEMO_SELLER_KEY=${seller.key}
 
@@ -44,7 +44,7 @@ X402_FACILITATOR_URL=https://x402.org/facilitator
 `);
 
 console.error(`
-Fund the buyer with Base Sepolia USDC — USDC only, no ETH needed:
+Fund the buyer with Base Sepolia USDC: USDC only, no ETH needed:
   address : ${buyer.address}
   token   : 0x036CbD53842c5426634e7929541eC2318f3dCF7e  (USDC, base-sepolia)
   faucet  : https://faucet.circle.com  (select Base Sepolia)

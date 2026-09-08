@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AIRTIGHT seller — a real 402-gated resource.
+ * AIRTIGHT seller: a real 402-gated resource.
  *
  * Unpaid GET returns a 402 carrying x402 payment requirements. A GET with a
  * valid X-PAYMENT header is verified through the facilitator, settled, and the
@@ -8,7 +8,7 @@
  *
  * The seller keeps its own deal memory (role: "seller"), mirroring the buyer.
  * Its replay guard is PERSISTED, unlike the ported implementation's in-memory
- * Map whose own comment admits "restart clears it" — a seller that forgets
+ * Map whose own comment admits "restart clears it": a seller that forgets
  * consumed payments across a restart will serve a replayed header for free.
  *
  * Usage: node seller/server.mjs [port]
@@ -125,7 +125,7 @@ const server = http.createServer(async (req, res) => {
         // Idempotent DELIVERY, not a refusal. This buyer already paid for this
         // payload; it may simply have died before receiving it. Serving the
         // same bytes again settles nothing and costs nothing, whereas refusing
-        // would leave a paying customer with nothing — the exact failure this
+        // would leave a paying customer with nothing: the exact failure this
         // project exists to prevent. Only a second SETTLEMENT would be wrong,
         // and that is barred by the fingerprint claim below and by the
         // on-chain nonce.
@@ -215,7 +215,7 @@ const server = http.createServer(async (req, res) => {
 // dies in a stack trace. Say so plainly instead.
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
-    console.error(`\nPort ${PORT} is already in use — another seller is still running.`);
+    console.error(`\nPort ${PORT} is already in use: another seller is still running.`);
     console.error(`A buyer would talk to THAT one, not this configuration.\n`);
     console.error(`  find it : netstat -ano | grep ":${PORT}"      (lsof -i :${PORT} on macOS/Linux)`);
     console.error(`  stop it : taskkill //PID <pid> //F            (kill <pid> elsewhere)`);
@@ -228,5 +228,5 @@ server.on('error', e => {
 
 server.listen(PORT, () => {
   log(`AIRTIGHT seller on http://localhost:${PORT}${RESOURCE_PATH}`);
-  log(`  network ${process.env.X402_NETWORK || 'base-sepolia'} · mode ${process.env.PAYMENT_MODE || 'live'} · payTo ${process.env.X402_PAY_TO || '(UNSET — challenge unusable)'}`);
+  log(`  network ${process.env.X402_NETWORK || 'base-sepolia'} · mode ${process.env.PAYMENT_MODE || 'live'} · payTo ${process.env.X402_PAY_TO || '(UNSET: challenge unusable)'}`);
 });

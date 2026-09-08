@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AIRTIGHT buyer agent — the real x402 path, driven by durable memory.
+ * AIRTIGHT buyer agent: the real x402 path, driven by durable memory.
  *
  * Walks one deal: 402 challenge → sign → store → settle → receive → close.
  * Safe to kill at any point and re-run; it continues from whatever reached
@@ -14,7 +14,7 @@
  *   5. record PAID with the settlement tx
  *
  * Step 3 before step 4 is the whole design. Killed between them, we wake with a
- * stored authorisation and re-submit THAT ONE — identical nonce, so the token
+ * stored authorisation and re-submit THAT ONE: identical nonce, so the token
  * contract settles it at most once. Signing afresh on wake would mint a new
  * nonce and pay the seller twice.
  *
@@ -87,7 +87,7 @@ async function main() {
   // ── cold start ───────────────────────────────────────────────────────────
   if (!deal) {
     if (process.env.AIRTIGHT_RESUME_ONLY === '1') {
-      say(`REFUSAL no verifiable deal state for ${dealId} — refusing to sign or pay`);
+      say(`REFUSAL no verifiable deal state for ${dealId}: refusing to sign or pay`);
       process.exit(3);
     }
     const c = await fetchChallenge(resourceUrl);
@@ -111,13 +111,13 @@ async function main() {
   } else {
     // A recorded tx_hash came from a facilitator's word. Before acting on a deal
     // that claims to be paid, ask the chain. Unreachable RPC returns null and
-    // changes nothing — only a definite "no such transaction" refuses.
+    // changes nothing, only a definite "no such transaction" refuses.
     let onChain = {};
     if (isTxHash(deal.payment?.tx_hash)) {
       const found = await txFound(deal.payment.tx_hash, { network: deal.terms?.network });
       onChain = { txFound: found };
       if (found === true) say(`VERIFIED tx ${deal.payment.tx_hash.slice(0, 10)}… confirmed on ${deal.terms?.network}`);
-      if (found === null) say('UNVERIFIED could not reach the chain — proceeding on the record');
+      if (found === null) say('UNVERIFIED could not reach the chain: proceeding on the record');
     }
 
     const a = assessDeal({ deal, attestations: await mem.getAttestations(dealId), onChain });
@@ -137,10 +137,10 @@ async function main() {
   if (deal.state === 'QUOTED') {
     const price = deal.terms.price_cap_usdc;
     if (!(price > 0 && price <= Number(process.env.AIRTIGHT_MAX_USDC || 1))) {
-      say(`REFUSAL price ${price} USDC exceeds cap — refusing to authorise`);
+      say(`REFUSAL price ${price} USDC exceeds cap: refusing to authorise`);
       process.exit(3);
     }
-    // The payer is our own address, known before we sign anything — recording
+    // The payer is our own address, known before we sign anything: recording
     // it here is what makes AUTHORIZED mean something a later session can check.
     deal = await mem.transition(dealId, 'AUTHORIZED', {
       authorization: { payer: deriveAddress(KEY), authorized_at: new Date().toISOString() },
@@ -164,7 +164,7 @@ async function main() {
     }
 
     if (!await mem.claimFingerprint(signed.fingerprint, dealId)) {
-      say('BLOCKED fingerprint already consumed — would double-pay');
+      say('BLOCKED fingerprint already consumed: would double-pay');
       process.exit(4);
     }
     // Durable BEFORE the money moves. Everything needed to replay this exact
@@ -191,7 +191,7 @@ async function main() {
 
     if (r.status === 409) {
       // The seller already consumed this payment, so we died after it settled.
-      // Take the transaction hash from ITS receipt — deriving one from the nonce
+      // Take the transaction hash from ITS receipt: deriving one from the nonce
       // would write a hash that does not exist, which is worse than none: the
       // record would look verified and fail every check made against it.
       const tx = r.receipt?.transaction || r.receipt?.txHash;

@@ -1,28 +1,28 @@
 ---
 name: airtight
-description: Use BEFORE any step that is expensive or impossible to repeat — moving money, sending a message, deleting data, or beginning a long multi-step job. Records what is needed to recover before the risk is taken, so a crashed or restarted agent resumes instead of redoing work or paying twice. Also use on WAKE, before acting, to find out what a previous run already did. Triggers: "pay", "transfer", "purchase", "x402", "settle", "checkout", "long job", "batch", "import", "migration", "pipeline", "resume", "restart", "crashed", "picked up where I left off".
+description: Use BEFORE any step that is expensive or impossible to repeat, such as moving money, sending a message, deleting data, or beginning a long multi-step job. Records what is needed to recover before the risk is taken, so a crashed or restarted agent resumes instead of redoing work or paying twice. Also use on WAKE, before acting, to find out what a previous run already did. Triggers: "pay", "transfer", "purchase", "x402", "settle", "checkout", "long job", "batch", "import", "migration", "pipeline", "resume", "restart", "crashed", "picked up where I left off".
 ---
 
-# AIRTIGHT — write before the risk
+# AIRTIGHT: write before the risk
 
 You are an agent that can be killed at any moment: a deploy, an OOM, a dropped
 socket, a `kill -9`. None of those give you a warning. AIRTIGHT is how you make
-that survivable — **you record what recovery needs BEFORE you take the risk,
+that survivable; **you record what recovery needs BEFORE you take the risk,
 never after**, so it does not matter when the process stops.
 
 There are two modules. Pick by one question: **is the step reversible?**
 
 | The step | Module | A missing record means |
 |---|---|---|
-| Irreversible — money, an email, a delete | `airtight/payments` | **REFUSE to act** |
-| Reversible but expensive — a long job | `airtight/tasks` | start from zero |
+| Irreversible: money, an email, a delete | `airtight/payments` | **REFUSE to act** |
+| Reversible but expensive: a long job | `airtight/tasks` | start from zero |
 
 If you get this wrong in the direction of tasks, an agent pays twice. Prefer
 Payment Safety whenever you are unsure.
 
 ---
 
-## Rule 1 — On wake, ask before you act
+## Rule 1: on wake, ask before you act
 
 Never assume a fresh start. A previous run of you may have got halfway.
 
@@ -40,13 +40,13 @@ if (deal) {
 
 `assessDeal` returns exactly one of:
 
-- **RESUME** — safe to continue, and `action` says from where
-- **REFUSAL** — you cannot verify your own state. **Stop. Do not start over.**
+- **RESUME**: safe to continue, and `action` says from where
+- **REFUSAL**: you cannot verify your own state. **Stop. Do not start over.**
   Starting over is how you pay twice.
-- **DISPUTED** — a counterparty signed for something that did not happen.
+- **DISPUTED**: a counterparty signed for something that did not happen.
   You hold portable evidence; do not retry, escalate.
 
-## Rule 2 — Before money moves, store the instrument
+## Rule 2: before money moves, store the instrument
 
 The order is the entire product. Sign, **store**, then pay.
 
@@ -68,9 +68,9 @@ await submitPayment(url, headerFromStored(deal.payment.x402));
 ```
 
 Never sign a fresh authorisation on resume. The nonce is what makes a payment
-unrepeatable — the same one settles at most once, a new one pays again.
+unrepeatable: the same one settles at most once, a new one pays again.
 
-## Rule 3 — Before a long job, checkpoint each step
+## Rule 3: before a long job, checkpoint each step
 
 ```js
 import { TaskMemory, SibylDriver, installCrashHooks } from 'airtight/tasks';
@@ -88,8 +88,8 @@ for (let i = resumeFrom; i < 9; i++) {
 await mem.done(taskId);
 ```
 
-**When your plan is not known in advance** — a loop deciding its next action
-from the last result — use `advance()` instead. A counter alone cannot tell a
+**When your plan is not known in advance**: a loop deciding its next action
+from the last result. Use `advance()` instead. A counter alone cannot tell a
 future run *what* was done:
 
 ```js

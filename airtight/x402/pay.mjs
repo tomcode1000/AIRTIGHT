@@ -1,5 +1,5 @@
 /**
- * x402 buyer leg — sign once, store, re-submit the stored authorisation.
+ * x402 buyer leg. Sign once, store, re-submit the stored authorisation.
  *
  * ── Why this file is where memory becomes load-bearing ──────────────────────
  * `signTransferWithAuthorization` mints a RANDOM EIP-3009 nonce on every call.
@@ -18,7 +18,7 @@ import { signTransferWithAuthorization, deriveAddress } from '../staging/x402/si
 
 export const CHAIN_IDS = { base: 8453, 'base-sepolia': 84532 };
 
-/** sha256(resource|nonce|amount|payTo) — same shape as deals.paymentFingerprint. */
+/** sha256(resource|nonce|amount|payTo): same shape as deals.paymentFingerprint. */
 export function fingerprintFor({ resource, nonce, amount, payTo }) {
   return crypto.createHash('sha256')
     .update(Buffer.from([resource, nonce, amount, payTo].map(String).join('|'), 'utf8'))
@@ -41,7 +41,7 @@ export function signPayment({ privateKey, requirements, ttlSeconds = 600 }) {
   const accept = requirements?.accepts?.[0];
   if (!accept) throw new Error('signPayment: challenge has no accepts[0]');
   if (accept.scheme !== 'exact') throw new Error(`signPayment: unsupported scheme ${accept.scheme}`);
-  if (!accept.payTo) throw new Error('signPayment: challenge has empty payTo — X402_PAY_TO unset on the seller');
+  if (!accept.payTo) throw new Error('signPayment: challenge has empty payTo: X402_PAY_TO unset on the seller');
 
   const chainId = CHAIN_IDS[accept.network];
   if (!chainId) throw new Error(`signPayment: unknown network ${accept.network}`);
@@ -86,7 +86,7 @@ export function signPayment({ privateKey, requirements, ttlSeconds = 600 }) {
  */
 export function headerFromStored(stored) {
   if (!stored?.authorization || !stored?.signature) {
-    throw new Error('headerFromStored: stored payment is incomplete — refusing to re-sign');
+    throw new Error('headerFromStored: stored payment is incomplete: refusing to re-sign');
   }
   return encodeHeader(stored);
 }

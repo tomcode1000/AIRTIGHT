@@ -1,5 +1,5 @@
 /**
- * AIRTIGHT deal memory — the load-bearing layer.
+ * AIRTIGHT deal memory: the load-bearing layer.
  *
  * Every record in SCHEMA.md is written and read through here, and the state
  * machine's rules are enforced at the write, not by the caller remembering to
@@ -20,7 +20,7 @@ export const CAT = Object.freeze({
 
 export const ORDER = ['INTENT', 'QUOTED', 'AUTHORIZED', 'IN_FLIGHT', 'PAID', 'DELIVERED', 'CLOSED'];
 
-// Legal transitions. Anything absent is refused — including same-state writes,
+// Legal transitions. Anything absent is refused, including same-state writes,
 // which would let a caller quietly mutate terms after authorisation.
 const LEGAL = {
   INTENT:     ['QUOTED', 'DISPUTED'],
@@ -51,7 +51,7 @@ export function newDealId() {
   return `dt-${Math.floor(Date.now() / 1000)}-${crypto.randomBytes(2).toString('hex')}`;
 }
 
-/** sha256(resource|nonce|amount|payTo) — the replay guard from PORTING.md. */
+/** sha256(resource|nonce|amount|payTo): the replay guard from PORTING.md. */
 export function paymentFingerprint({ resource, nonce, amount, payTo }) {
   return sha256hex(Buffer.from([resource, nonce, amount, payTo].map(String).join('|'), 'utf8'));
 }
@@ -70,7 +70,7 @@ export class DealMemory {
    * Open a deal at INTENT and commit to its terms in one durable write.
    *
    * The disclosure commitment is built here rather than later so the root is
-   * fixed before anything is negotiated — a root computed after the fact would
+   * fixed before anything is negotiated: a root computed after the fact would
    * prove nothing about what the terms were at the start.
    */
   async open({ dealId = newDealId(), role, terms }) {
@@ -110,7 +110,7 @@ export class DealMemory {
    */
   async transition(dealId, to, patch = {}) {
     const deal = await this.get(dealId);
-    if (!deal) throw new Error(`transition: no deal record for ${dealId} — REFUSAL`);
+    if (!deal) throw new Error(`transition: no deal record for ${dealId}: REFUSAL`);
     if (!LEGAL[deal.state]) throw new Error(`transition: unknown current state ${deal.state}`);
     if (!LEGAL[deal.state].includes(to)) {
       throw new Error(`transition: ${deal.state} -> ${to} is not a legal transition`);
@@ -125,7 +125,7 @@ export class DealMemory {
       updated_at: iso(),
     };
     if (termsHash(next.terms) !== next.terms_hash) {
-      throw new Error('transition: terms_hash no longer recomputes — refusing to write');
+      throw new Error('transition: terms_hash no longer recomputes: refusing to write');
     }
     const check = EVIDENCE[to]?.(next);
     if (typeof check === 'string') throw new Error(`transition: ${check}`);
@@ -181,7 +181,7 @@ export class DealMemory {
     return out;
   }
 
-  /** Private — never include in anything sent to a counterparty. */
+  /** Private, never include in anything sent to a counterparty. */
   async getWitness(dealId) { return this.driver.read(CAT.WITNESS, dealId); }
 }
 

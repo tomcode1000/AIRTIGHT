@@ -5,7 +5,7 @@
  * sibyl-memory-mcp server, so the two drivers are proven interchangeable rather
  * than assumed to be.
  *
- * Points SIBYL_MEMORY_DB at a throwaway file — it must never touch the user's
+ * Points SIBYL_MEMORY_DB at a throwaway file; it must never touch the user's
  * real store at ~/.sibyl-memory/memory.db. Skips cleanly when the server is not
  * installed, so this suite is safe to run on any machine.
  */
@@ -22,7 +22,7 @@ const BIN = process.env.SIBYL_MCP_BIN
       .map(p => path.resolve(import.meta.dirname, p)).find(p => fs.existsSync(p));
 
 if (!BIN) {
-  console.log('SKIP sibyl.test — sibyl-memory-mcp not installed (set SIBYL_MCP_BIN to override)');
+  console.log('SKIP sibyl.test: sibyl-memory-mcp not installed (set SIBYL_MCP_BIN to override)');
   process.exit(0);
 }
 
@@ -45,7 +45,7 @@ const drivers = [];
 function driver() { const d = new SibylDriver({ bin: BIN, db: DB }); drivers.push(d); return d; }
 async function t(name, fn) { await fn(); passed++; console.log(`  ok  ${name}`); }
 
-console.log(`sibyl conformance — db ${DB}\n`);
+console.log(`sibyl conformance: db ${DB}\n`);
 
 // Guard first: if this is wrong, every later test pollutes the real store.
 await t('driver targets the throwaway db, not the user store', async () => {
@@ -150,4 +150,4 @@ for (let i = 0; i < 10; i++) {
   try { fs.rmSync(tmp, { recursive: true, force: true }); break; }
   catch { await new Promise(r => setTimeout(r, 200)); }
 }
-console.log(`\nPASS sibyl.test — ${passed} groups green`);
+console.log(`\nPASS sibyl.test: ${passed} groups green`);
