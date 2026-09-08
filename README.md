@@ -31,24 +31,31 @@ import { DealMemory }  from 'airtight/payments';   // payment safety only
 import { ... }         from 'airtight';            // both
 ```
 
-Each subpath pulls in only its own module. Nothing is installed globally and
-nothing runs in the background — it is a library you call, not a daemon that
-watches your agent.
+Each subpath pulls in only its own module. Nothing runs in the background — it
+is a library you call, not a daemon that watches your agent.
 
-### Teaching an agent when to call it
+### The skill — teaching an agent when to call it
 
-A library only helps if the agent reaches for it at the right moment, so one
-ships with the package: [`airtight/skill/SKILL.md`](airtight/skill/SKILL.md).
+The library is what your agent calls. The skill is what tells it *when* — including
+on wake, before it acts, which is the moment it has no reason to suspect a previous
+run got halfway. Install it once:
 
 ```bash
-cp -r node_modules/airtight/airtight/skill .claude/skills/airtight
+npx airtight-skill              # this project  -> .claude/skills/airtight/
+npx airtight-skill --global     # every project -> ~/.claude/skills/airtight/
 ```
 
-Its description is written to fire on the moments that matter — before money
-moves, before a long job starts, and on wake before acting — and the body gives
-the agent the decision rule (*is this step reversible?*), the call order, and
-the mistakes that cost money. Any agent runtime that loads instruction files can
-use it; the format follows the standard skill frontmatter.
+It is a separate command rather than something `npm install` does silently, because
+a dependency that writes into your `.claude` directory uninvited is doing something
+you did not ask for. It prints what it wrote, is safe to run twice, and re-running it
+after an upgrade picks up a newer skill.
+
+One skill covers both modules — deliberately. The hard call for an agent is not
+operating either one, it is choosing between them, and it can only make that choice
+if both are described in the same place. The body carries that decision rule (*is
+this step reversible?*), the call order, and the mistakes that cost money. Any
+runtime that loads instruction files can use it; the format is standard skill
+frontmatter, and the source is [`airtight/skill/SKILL.md`](airtight/skill/SKILL.md).
 
 ## Two modules, one principle
 

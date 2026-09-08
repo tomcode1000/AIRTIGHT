@@ -18,17 +18,30 @@
     "airtight/tasks/",
     "airtight/x402/",
     "airtight/staging/",
+    "airtight/skill/",
     "README.md",
     "LICENSE"
   ],
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "keywords": [
-    "agents", "crash-safety", "idempotency", "checkpointing",
-    "x402", "base", "usdc", "sibyl-memory", "write-ahead"
+    "agents",
+    "crash-safety",
+    "idempotency",
+    "checkpointing",
+    "x402",
+    "base",
+    "usdc",
+    "sibyl-memory",
+    "write-ahead"
   ],
   "sideEffects": false,
   "dependencies": {},
   "scripts": {
     "test": "cd airtight && npm test"
+  },
+  "bin": {
+    "airtight-skill": "./airtight/skill/install.mjs"
   }
 }
