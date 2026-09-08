@@ -87,6 +87,9 @@
   .btn:hover{border-color:var(--muted);text-decoration:none}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#10202D;font-weight:600}
   .btn.primary:hover{background:#FFAD2E}
+  /* the second module keeps its colour wherever it is offered */
+  .btn.two{border-color:rgba(232,163,61,.55);color:var(--hold)}
+  .btn.two:hover{background:var(--hold);border-color:var(--hold);color:#1C1305}
 
   /* ══ HERO ═══════════════════════════════════════════════════════ */
   .hero{
@@ -312,15 +315,22 @@
   <div class="wrap">
     <section class="hero">
       <div>
-        <div class="kicker">Payment safety for autonomous agents</div>
+        <div class="kicker">Crash-safe memory for agents &nbsp;·&nbsp; two modules</div>
         <h1>Write to memory <em>before</em> you pay.</h1>
         <p class="lede">
           An agent killed mid-payment cannot tell whether the money left. Retry and it pays
           twice. Sit still and it holds nothing. AIRTIGHT records the signed payment
           <strong>before</strong> the money moves — so waking up is never a guess.
         </p>
+        <p class="lede" style="font-size:16px;margin-bottom:26px;color:var(--muted)">
+          The same rule covers long jobs that should not restart at zero.
+          <a href="#modules" style="color:var(--hold)">Two modules</a>, one discipline:
+          write what you need to recover <em style="font-style:normal;color:var(--text)">before</em>
+          you take the risk.
+        </p>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <a class="btn primary" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Open the Deal Room</a>
+          <a class="btn two" href="https://claude.ai/code/artifact/9fb4b586-f957-4331-90fe-c4cae3448623">Open the Task Room</a>
           <a class="btn" href="#proof">See the proof</a>
         </div>
       </div>
