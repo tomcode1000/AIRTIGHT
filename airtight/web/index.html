@@ -74,6 +74,9 @@
   }
   .nav-links a.cta .ar{font-family:var(--mono);font-size:13px;opacity:.75}
   .nav-links a.cta:hover{background:#FFAD2E}
+  /* the second module keeps its own colour everywhere it appears */
+  .nav-links a.cta.two{background:transparent;color:var(--hold);border:1px solid rgba(232,163,61,.55)}
+  .nav-links a.cta.two:hover{background:var(--hold);color:#1C1305}
   @media (max-width:720px){.nav-links a:not(.cta),.nav-sep{display:none}}
 
   .btn{
@@ -299,6 +302,7 @@
       <a href="#layer">Use it</a>
       <i class="nav-sep"></i>
       <a class="cta" href="https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65">Deal Room <span class="ar">&rarr;</span></a>
+      <a class="cta two" href="https://claude.ai/code/artifact/9fb4b586-f957-4331-90fe-c4cae3448623">Task Room <span class="ar">&rarr;</span></a>
     </div>
   </div>
 </nav>
