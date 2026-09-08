@@ -183,6 +183,12 @@
     <div class="r"><div class="eyebrow">Sibyl Labs Memory Hackathon</div></div>
     <h1 class="r">Agents pay each<br>other now.</h1>
     <p class="sub r" style="max-width:26ch">A payment is not instant.</p>
+    <div class="r" style="margin-top:calc(var(--u)*2.2);display:flex;gap:calc(var(--u)*1.8);font-family:var(--mono);font-size:calc(var(--u)*1.02)">
+      <span style="color:var(--accent)">airtight/payments</span>
+      <span style="color:var(--faint)">·</span>
+      <span style="color:var(--hold)">airtight/tasks</span>
+      <span style="color:var(--faint)">two modules, one rule</span>
+    </div>
   </section>
 
   <!-- 2 ═══ the window ══════════════════════════════════════════ -->
@@ -257,7 +263,7 @@
   </section>
 
   <!-- 6 ═══ proof ═══════════════════════════════════════════════ -->
-  <section class="slide" data-t="20" data-cut="1">
+  <section class="slide" data-t="20">
     <div class="r"><div class="eyebrow">Verified on Base · 5 of 6</div></div>
     <h2 class="r">What we stored is what the chain spent.</h2>
     <div class="hex r">
@@ -273,7 +279,7 @@
   </section>
 
   <!-- 7 ═══ the gate ════════════════════════════════════════════ -->
-  <section class="slide" data-t="16" data-cut="1">
+  <section class="slide" data-t="16">
     <div class="r"><div class="eyebrow">The test we hold ourselves to · 6 of 6</div></div>
     <h2 class="r">Delete the memory and it stops paying.</h2>
     <p class="sub r" style="max-width:50ch">Not retry. <span class="accent">Refuse.</span> Because starting over is how you pay twice.</p>
@@ -338,6 +344,16 @@
     <p class="sep r">Different Sibyl tiers, so neither can reach the other's storage. Delete every task record and payments are untouched.</p>
   </section>
 
+  <!-- 10b ═══ module 2 · interstitial ═════════════════════════════ -->
+  <section class="slide" data-t="6" data-cut="1">
+    <div class="r"><div class="eyebrow two">Module two of two</div></div>
+    <h1 class="r" style="font-size:calc(var(--u)*3.6)">Same rule.<br><span style="color:var(--hold)">Cheaper failure.</span></h1>
+    <p class="sub r" style="max-width:40ch">
+      <span style="font-family:var(--mono);font-size:calc(var(--u)*1.3);color:var(--hold)">airtight/tasks</span>
+      &nbsp;— for work that is safe to repeat but expensive to repeat.
+    </p>
+  </section>
+
   <!-- 11 ═══ module 2 · what a crash costs ══════════════════════ -->
   <section class="slide" data-t="16" data-cut="1">
     <div class="r"><div class="eyebrow two">Second module · 4 of 4</div></div>
@@ -374,7 +390,7 @@
 </div>
 
 <div class="bar"><i id="bar"></i></div>
-<div class="hud" id="hud"><span id="pos">1 / 12</span><span id="tag" class="cut">in cut</span><b id="clock">0:00</b><span id="target">/ 0:10</span></div>
+<div class="hud" id="hud"><span id="pos">1 / 13</span><span id="tag" class="cut">in cut</span><b id="clock">0:00</b><span id="target">/ 0:10</span></div>
 <div class="hint" id="hint">← → navigate · F fullscreen · P presenter · C cut-only · R restart</div>
 
 <script>
