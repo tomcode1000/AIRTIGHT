@@ -1,0 +1,323 @@
+<title>AIRTIGHT Deck</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230A1119"/><g fill="none" stroke="%23FF9900" stroke-width="5" stroke-linecap="square"><path d="M18 32 H30"/><path d="M42 32 H56" opacity=".55"/></g><circle cx="30" cy="32" r="6" fill="%23FF9900"/><path d="M36 24 L36 40" stroke="%23FF9900" stroke-width="5" stroke-linecap="round" opacity=".45"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap">
+
+<style>
+  /* AIRTIGHT — presentation deck.
+     Built to be screen-recorded: type is sized for video, motion is tied to
+     meaning (a line that gets cut, steps that light in order), and every slide
+     rests in a readable state so a paused frame is never mid-animation. */
+  :root{
+    --ground:#0A1119; --deep:#070D14; --card:#16222F; --card-hd:#1A2836;
+    --line:#2A3B4D; --hair:#1C2A38;
+    --text:#EDF1F5; --body:#AFBDCA; --muted:#7F8FA0; --faint:#54677A;
+    --link:#539FE5; --accent:#FF9900; --go:#3FBF7F; --hold:#E8A33D; --stop:#E05252;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    /* one type scale, driven off the viewport so it fills any projector */
+    --u: clamp(9px, 1.05vw, 17px);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--ground);color:var(--text);
+    font-family:var(--sans);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent);color:#10202D}
+
+  .deck{position:relative;height:100%;width:100%}
+  .slide{
+    position:absolute;inset:0;display:grid;align-content:center;
+    padding:0 clamp(40px,8vw,150px);
+    opacity:0;visibility:hidden;
+    transform:translateY(14px);
+    transition:opacity .34s ease, transform .34s ease, visibility 0s .34s;
+  }
+  .slide.on{opacity:1;visibility:visible;transform:none;transition:opacity .34s ease, transform .34s ease}
+
+  h1{font-size:calc(var(--u)*4.4);font-weight:600;line-height:1.02;letter-spacing:-.035em;margin:0;text-wrap:balance}
+  h2{font-size:calc(var(--u)*2.5);font-weight:600;line-height:1.08;letter-spacing:-.03em;margin:0 0 calc(var(--u)*1.6)}
+  .sub{font-size:calc(var(--u)*1.8);font-weight:300;color:var(--body);margin:calc(var(--u)*1.1) 0 0;line-height:1.35}
+  .eyebrow{
+    font-family:var(--mono);font-size:calc(var(--u)*.86);letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:calc(var(--u)*1.5);
+  }
+  .accent{color:var(--accent)}
+
+  /* reveal: children rise in sequence when the slide becomes active */
+  .r{opacity:0;transform:translateY(10px);transition:opacity .4s ease, transform .4s ease}
+  .on .r{opacity:1;transform:none}
+  .on .r:nth-child(1){transition-delay:.10s}
+  .on .r:nth-child(2){transition-delay:.22s}
+  .on .r:nth-child(3){transition-delay:.34s}
+  .on .r:nth-child(4){transition-delay:.46s}
+  .on .r:nth-child(5){transition-delay:.58s}
+
+  /* ── S2 · the window ─────────────────────────────────────────── */
+  .win{display:grid;gap:calc(var(--u)*.9);margin:calc(var(--u)*2.4) 0 calc(var(--u)*2)}
+  .rail{display:flex;align-items:center;gap:calc(var(--u)*.7);font-family:var(--mono);font-size:calc(var(--u)*1)}
+  .rail .pt{color:var(--muted);white-space:nowrap}
+  .seg{height:calc(var(--u)*.5);background:var(--line);border-radius:99px;flex:1;position:relative;overflow:hidden}
+  .seg .fill{position:absolute;inset:0;background:var(--go);transform-origin:left;transform:scaleX(0);transition:transform .7s ease .3s}
+  .on .seg .fill{transform:scaleX(1)}
+  .window{
+    flex:1.5;position:relative;height:calc(var(--u)*3.1);border-radius:8px;
+    border:1px dashed rgba(224,82,82,.5);background:rgba(224,82,82,.09);
+    display:grid;place-items:center;
+  }
+  .window .lbl{
+    font-family:var(--mono);font-size:calc(var(--u)*.82);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--stop);
+  }
+  .window .bolt{
+    position:absolute;left:50%;top:-14%;height:128%;width:3px;background:var(--stop);
+    transform:translateX(-50%) scaleY(0);transform-origin:top;
+    transition:transform .22s cubic-bezier(.2,.8,.3,1) 1.15s;
+  }
+  .on .window .bolt{transform:translateX(-50%) scaleY(1)}
+
+  .modes{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*.55) calc(var(--u)*2);font-family:var(--mono);font-size:calc(var(--u)*1.02)}
+  .modes dt{color:var(--text)}
+  .modes dd{margin:0;color:var(--faint)}
+
+  .thesis{
+    margin-top:calc(var(--u)*2.2);padding-top:calc(var(--u)*1.6);
+    border-top:1px solid var(--hair);
+    font-size:calc(var(--u)*2);font-weight:300;line-height:1.3;color:var(--text);max-width:34ch;
+  }
+  .thesis b{font-weight:600;color:var(--accent)}
+
+  /* ── S3 · the fork ───────────────────────────────────────────── */
+  .fork{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*2.2);margin-top:calc(var(--u)*2.2)}
+  .arm{
+    border:1px solid rgba(224,82,82,.42);background:rgba(224,82,82,.08);
+    border-radius:12px;padding:calc(var(--u)*1.8) calc(var(--u)*1.7);
+  }
+  .arm .k{
+    font-family:var(--mono);font-size:calc(var(--u)*1);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--stop);margin-bottom:calc(var(--u)*1);
+  }
+  .arm p{margin:0;font-size:calc(var(--u)*1.42);font-weight:300;color:var(--body);line-height:1.35}
+  .arm .out{
+    margin-top:calc(var(--u)*1.3);padding-top:calc(var(--u)*1);border-top:1px solid rgba(224,82,82,.28);
+    font-size:calc(var(--u)*1.55);font-weight:500;color:var(--stop);
+  }
+  .aside{margin-top:calc(var(--u)*2);font-size:calc(var(--u)*1.3);font-weight:300;color:var(--muted)}
+
+  /* ── S4 · the mechanism ──────────────────────────────────────── */
+  .steps{display:grid;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin-top:calc(var(--u)*2)}
+  .stp{
+    background:var(--card);display:grid;grid-template-columns:calc(var(--u)*3.4) calc(var(--u)*6) 1fr;
+    align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*1.35) calc(var(--u)*1.8);
+    opacity:.34;transition:opacity .32s ease, background .32s ease;
+  }
+  .on .stp{opacity:1}
+  .on .stp:nth-child(1){transition-delay:.25s}
+  .on .stp:nth-child(2){transition-delay:.55s}
+  .on .stp:nth-child(3){transition-delay:.85s}
+  .stp .n{font-family:var(--mono);font-size:calc(var(--u)*1);color:var(--faint)}
+  .stp .v{font-family:var(--mono);font-size:calc(var(--u)*1.35);color:var(--accent);letter-spacing:.04em}
+  .stp .d{font-size:calc(var(--u)*1.3);font-weight:300;color:var(--body)}
+  .stp.key{background:var(--card-hd);box-shadow:inset 4px 0 0 var(--go)}
+  .stp.key .v{color:var(--go)}
+  .payoff{
+    margin-top:calc(var(--u)*2);font-size:calc(var(--u)*1.62);font-weight:300;color:var(--body);
+    font-family:var(--mono);
+  }
+  .payoff b{color:var(--text);font-weight:500}
+
+  /* ── S5 · close ──────────────────────────────────────────────── */
+  .close{display:grid;justify-items:start;gap:calc(var(--u)*1.5)}
+  .mk{width:calc(var(--u)*4.6);height:calc(var(--u)*4.6);color:var(--accent);display:block}
+  .stack{display:flex;gap:calc(var(--u)*2);font-family:var(--mono);font-size:calc(var(--u)*1.05);color:var(--muted);flex-wrap:wrap}
+  .repo{font-family:var(--mono);font-size:calc(var(--u)*1.05);color:var(--link)}
+
+  /* ── chrome ──────────────────────────────────────────────────── */
+  .bar{position:fixed;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.05);z-index:5}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .34s ease}
+  .hud{
+    position:fixed;right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.6);z-index:6;
+    display:none;gap:calc(var(--u)*1.2);align-items:center;
+    font-family:var(--mono);font-size:calc(var(--u)*.95);color:var(--muted);
+    background:rgba(7,13,20,.82);border:1px solid var(--hair);border-radius:99px;
+    padding:calc(var(--u)*.55) calc(var(--u)*1.2);backdrop-filter:blur(6px);
+  }
+  .hud.on{display:flex}
+  .hud b{color:var(--text);font-weight:500}
+  .hud .over{color:var(--stop)}
+  .hint{
+    position:fixed;left:calc(var(--u)*1.6);bottom:calc(var(--u)*1.6);z-index:6;
+    font-family:var(--mono);font-size:calc(var(--u)*.85);color:var(--faint);
+    opacity:.55;transition:opacity .4s ease;
+  }
+  .hint.hide{opacity:0}
+
+  @media (prefers-reduced-motion:reduce){
+    .slide,.r,.seg .fill,.window .bolt,.stp,.bar i{transition:none!important}
+    .r{opacity:1;transform:none}
+    .seg .fill{transform:scaleX(1)}
+    .window .bolt{transform:translateX(-50%) scaleY(1)}
+    .stp{opacity:1}
+  }
+</style>
+
+<div class="deck" id="deck">
+
+  <!-- ══ 1 ══════════════════════════════════════════════════════ -->
+  <section class="slide" data-t="10">
+    <div class="r"><div class="eyebrow">Sibyl Labs Memory Hackathon</div></div>
+    <h1 class="r">Agents pay each<br>other now.</h1>
+    <p class="sub r" style="max-width:26ch">A payment is not instant.</p>
+  </section>
+
+  <!-- ══ 2 ══════════════════════════════════════════════════════ -->
+  <section class="slide" data-t="22">
+    <div class="r"><div class="eyebrow">The window</div></div>
+
+    <div class="win r">
+      <div class="rail">
+        <span class="pt">decide</span>
+        <span class="seg"><i class="fill"></i></span>
+        <span class="pt">send</span>
+        <span class="window"><span class="lbl">the window</span><i class="bolt"></i></span>
+        <span class="pt">settled</span>
+      </div>
+    </div>
+
+    <dl class="modes r">
+      <dt>process killed</dt><dd>SIGKILL · OOM · host restart</dd>
+      <dt>network drops</dt><dd>request sent, response never arrives</dd>
+      <dt>code throws</dt><dd>after the payment call, before recording it</dd>
+      <dt>request times out</dt><dd>which does not mean it failed</dd>
+    </dl>
+
+    <p class="thesis r">
+      The agent cannot tell <b>“it failed”</b> apart from
+      <b>“it worked and I never heard”</b>.
+    </p>
+  </section>
+
+  <!-- ══ 3 ══════════════════════════════════════════════════════ -->
+  <section class="slide" data-t="18">
+    <div class="r"><div class="eyebrow">Why money is different</div></div>
+    <h2 class="r">Both choices are wrong.</h2>
+
+    <div class="fork r">
+      <div class="arm">
+        <div class="k">Retry</div>
+        <p>The first payment already went through.</p>
+        <div class="out">Paid twice.</div>
+      </div>
+      <div class="arm">
+        <div class="k">Don't retry</div>
+        <p>It may have succeeded and never been recorded.</p>
+        <div class="out">Paid, got nothing, no paper trail.</div>
+      </div>
+    </div>
+
+    <p class="aside r">For an ordinary task, guessing wrong costs you time. You redo the work.</p>
+  </section>
+
+  <!-- ══ 4 ══════════════════════════════════════════════════════ -->
+  <section class="slide" data-t="12">
+    <div class="r"><div class="eyebrow">The mechanism</div></div>
+    <h2 class="r">Write before you pay.</h2>
+
+    <div class="steps r">
+      <div class="stp"><span class="n">01</span><span class="v">sign</span><span class="d">an EIP-3009 authorisation, carrying a one-time nonce</span></div>
+      <div class="stp key"><span class="n">02</span><span class="v">store</span><span class="d">the signature itself — before any money moves</span></div>
+      <div class="stp"><span class="n">03</span><span class="v">pay</span><span class="d">submit it</span></div>
+    </div>
+
+    <p class="payoff r">
+      a log entry cannot be re-submitted. <b>a signature can.</b>
+    </p>
+  </section>
+
+  <!-- ══ 5 ══════════════════════════════════════════════════════ -->
+  <section class="slide" data-t="14">
+    <div class="close">
+      <svg class="mk r" viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square">
+          <path d="M46 8 H12 a4 4 0 0 0-4 4 v40 a4 4 0 0 0 4 4 h34" opacity=".38"/>
+          <path d="M18 32 H30"/><path d="M42 32 H56" opacity=".55"/>
+        </g>
+        <circle cx="30" cy="32" r="5" fill="currentColor"/>
+        <path d="M35 25.5 L35 38.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".45"/>
+      </svg>
+      <h1 class="r" style="font-size:calc(var(--u)*3.6);letter-spacing:.06em">AIRTIGHT</h1>
+      <p class="sub r" style="margin:0;max-width:30ch">Write before the risk.</p>
+      <div class="stack r">
+        <span>airtight/payments</span><span>airtight/tasks</span>
+      </div>
+      <div class="stack r" style="color:var(--faint)">
+        <span>Sibyl Memory</span><span>Base</span><span>x402</span>
+      </div>
+      <div class="repo r">github.com/tomcode1000/airtight</div>
+    </div>
+  </section>
+</div>
+
+<div class="bar"><i id="bar"></i></div>
+<div class="hud" id="hud"><span id="pos">1 / 5</span><b id="clock">0:00</b><span id="target">/ 0:10</span></div>
+<div class="hint" id="hint">← → navigate · F fullscreen · P presenter · R restart</div>
+
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  const bar = document.getElementById('bar');
+  const hud = document.getElementById('hud');
+  const hint = document.getElementById('hint');
+  const pos = document.getElementById('pos');
+  const clock = document.getElementById('clock');
+  const target = document.getElementById('target');
+
+  // Cumulative target times, so the presenter bar shows where you SHOULD be by
+  // the end of the current slide rather than a per-slide countdown.
+  const marks = slides.reduce((a, s) => (a.push((a.at(-1) ?? 0) + Number(s.dataset.t)), a), []);
+  const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  let i = 0, started = null;
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    pos.textContent = `${i + 1} / ${slides.length}`;
+    target.textContent = '/ ' + mmss(marks[i]);
+    if (i > 0) hint.classList.add('hide');
+  }
+
+  function tick(){
+    if (!started) { clock.textContent = '0:00'; clock.classList.remove('over'); return; }
+    const el = (Date.now() - started) / 1000;
+    clock.textContent = mmss(el);
+    clock.classList.toggle('over', el > marks[i] + 3);
+  }
+  setInterval(tick, 500);
+
+  addEventListener('keydown', e => {
+    const k = e.key;
+    if (k === 'ArrowRight' || k === ' ' || k === 'PageDown' || k === 'Enter'){ e.preventDefault(); if (!started) started = Date.now(); show(i + 1); }
+    else if (k === 'ArrowLeft' || k === 'PageUp'){ e.preventDefault(); show(i - 1); }
+    else if (k === 'Home'){ show(0); }
+    else if (k === 'End'){ show(slides.length - 1); }
+    else if (k.toLowerCase() === 'f'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
+    else if (k.toLowerCase() === 'p'){ hud.classList.toggle('on'); }
+    else if (k.toLowerCase() === 'r'){ started = null; show(0); hint.classList.remove('hide'); }
+    else if (/^[1-9]$/.test(k)){ if (!started) started = Date.now(); show(Number(k) - 1); }
+  });
+
+  // Click to advance, but never on a link.
+  addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    if (!started) started = Date.now();
+    show(i + 1);
+  });
+
+  show(0);
+})();
+</script>
