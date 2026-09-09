@@ -1,0 +1,19 @@
+# Railway builds with Nixpacks. This needs both runtimes: Node runs the agents
+# and the servers, Python provides the memory backend they write to, so a
+# Node-only build would deploy a site whose buttons cannot record anything.
+[phases.setup]
+nixPkgs = ["nodejs_22", "python312", "gcc"]
+
+[phases.install]
+cmds = [
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt",
+]
+
+[start]
+cmd = "node airtight/scripts/start-railway.mjs"
+
+[variables]
+# so the Node side can spawn `sibyl-memory-mcp` by name
+PATH = "/opt/venv/bin:/usr/local/bin:/usr/bin:/bin"
+NODE_ENV = "production"

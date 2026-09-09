@@ -46,7 +46,8 @@ const newDriver = () => process.env.AIRTIGHT_MEMORY === 'file'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
-const PORT = Number(process.env.PUBLIC_PORT || 4400);
+// Railway (and most hosts) hand the port in PORT and expect the app to use it.
+const PORT = Number(process.env.PORT || process.env.PUBLIC_PORT || 4400);
 const RESOURCE = process.env.AIRTIGHT_RESOURCE || 'http://localhost:4021/report/42';
 
 const NETWORK = process.env.X402_NETWORK || 'base-sepolia';

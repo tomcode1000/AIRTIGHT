@@ -1,0 +1,3 @@
+# The memory backend the agents write to. Installed from PyPI so the host can
+# build it; the Node code spawns `sibyl-memory-mcp` and talks to it over stdio.
+sibyl-memory-mcp>=0.2.0
