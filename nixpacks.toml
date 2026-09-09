@@ -6,8 +6,12 @@ nixPkgs = ["nodejs_22", "python312", "gcc"]
 
 [phases.install]
 cmds = [
-  "python3 -m venv /opt/venv",
-  "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt",
+  # The virtual environment lives inside the application directory. Built
+  # somewhere like /opt it exists during the build and is then absent at run
+  # time, because the final image carries the application directory rather than
+  # the whole filesystem.
+  "python3 -m venv /app/.venv",
+  "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt",
 ]
 
 [start]
@@ -21,4 +25,4 @@ NODE_ENV = "production"
 # Nix store path rather than /usr/bin, so overriding it removed `node` from the
 # environment and the container died before any of this code ran. Naming the
 # binary outright needs no PATH at all.
-SIBYL_MCP_BIN = "/opt/venv/bin/sibyl-memory-mcp"
+SIBYL_MCP_BIN = "/app/.venv/bin/sibyl-memory-mcp"

@@ -4,6 +4,6 @@
   "deploy": {
     "startCommand": "node airtight/scripts/start-railway.mjs",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 5
+    "restartPolicyMaxRetries": 3
   }
 }
