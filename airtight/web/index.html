@@ -315,10 +315,66 @@
     .gate .term{margin:16px;padding:15px 16px}
     .mod .bd{padding:16px}
   }
+
+  /* ══ THE FIELD ══════════════════════════════════════════════════
+     Not decoration, and deliberately not drifting dots. Each mark is a record
+     being written: it travels its lane left to right, and a few of them stop
+     dead partway and fade. That is the product in one gesture, running quietly
+     behind the argument. Sparse, one colour, and it holds still for anyone who
+     asked for less motion. */
+  #field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+  body > *{position:relative;z-index:1}
+
+  /* ══ THE WRITE HEAD ═════════════════════════════════════════════
+     A beam down the left edge of every code block, with a bloom behind it. The
+     same idea as the dot before the cut in the mark: the light sits where the
+     writing happens, at the start of the line, not spread over the whole panel. */
+  .code{position:relative;isolation:isolate}
+  .code::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+    background:linear-gradient(180deg,transparent,var(--accent) 18%,#FFD08A 50%,var(--accent) 82%,transparent);
+    opacity:.85;
+  }
+  .code::after{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:190px;pointer-events:none;z-index:-1;
+    background:radial-gradient(120px 60% at 0% 50%,rgba(255,153,0,.16),rgba(255,153,0,.05) 45%,transparent 72%);
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .code::before{animation:head 7s ease-in-out infinite}
+    @keyframes head{
+      0%,100%{clip-path:inset(0 0 62% 0)}
+      50%    {clip-path:inset(62% 0 0 0)}
+    }
+  }
+
+  /* ══ THE PANEL ══════════════════════════════════════════════════
+     The hero pipeline earns a little more weight: a rail down the left that the
+     lit rows sit against, a bloom behind the row that is currently writing, and
+     a header that catches light the way a physical instrument would. */
+  .rig{position:relative;isolation:isolate;
+       box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 18px 46px -28px rgba(0,0,0,.9)}
+  .rig::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:2px;z-index:2;
+    background:linear-gradient(180deg,transparent,rgba(63,191,127,.55),transparent);
+  }
+  .rig header{position:relative;overflow:hidden}
+  .rig header::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.06) 50%,transparent 65%);
+  }
+  .st{position:relative}
+  .st.lit::before{
+    content:"";position:absolute;left:-16px;right:-16px;top:0;bottom:0;z-index:-1;
+    background:linear-gradient(90deg,rgba(63,191,127,.10),transparent 60%);
+  }
+  .st.lit .d{box-shadow:0 0 10px 1px rgba(63,191,127,.45)}
+  .cut.on{box-shadow:0 0 22px -6px rgba(224,82,82,.55)}
   @media (prefers-reduced-motion:reduce){
     .st,.cut,.st .d,.st .w{transition:none!important}
   }
 </style>
+
+<canvas id="field" aria-hidden="true"></canvas>
 
 <nav>
   <div class="nav-in">
@@ -682,5 +738,88 @@
   settle();
   timers.push(setTimeout(play, 420));
   document.getElementById('replay').addEventListener('click', play);
+})();
+</script>
+
+<script>
+/* The field.
+   Each mark is one record travelling its lane. A minority are cut: they stop
+   where they are and fade, leaving nothing behind. Sparse on purpose, and it
+   never runs while the tab is hidden or when the reader asked for less motion. */
+(() => {
+  const cv = document.getElementById('field');
+  if (!cv) return;
+  const ctx = cv.getContext('2d', { alpha: true });
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  let w = 0, h = 0, dpr = 1, marks = [], raf = 0;
+
+  const count = () => Math.round(Math.min(46, Math.max(14, innerWidth / 34)));
+
+  function spawn(seed) {
+    const lanes = Math.max(6, Math.floor(h / 96));
+    const lane = Math.floor(Math.random() * lanes);
+    return {
+      y: (lane + .5) * (h / lanes) + (Math.random() * 12 - 6),
+      x: seed ? Math.random() * w : -Math.random() * 160,
+      v: .16 + Math.random() * .42,
+      len: 12 + Math.random() * 46,
+      a: 0, fade: 0,
+      // a minority never finish, which is the whole point
+      cut: Math.random() < .22 ? w * (.25 + Math.random() * .5) : Infinity,
+      dead: false,
+    };
+  }
+
+  function size() {
+    dpr = Math.min(2, devicePixelRatio || 1);
+    w = innerWidth; h = innerHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    marks = Array.from({ length: count() }, () => spawn(true));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (const m of marks) {
+      if (!m.dead) {
+        m.x += m.v;
+        if (m.a < 1) m.a = Math.min(1, m.a + .012);
+        if (m.x >= m.cut) { m.dead = true; m.fade = 1; }
+        if (m.x - m.len > w) Object.assign(m, spawn(false));
+      } else {
+        m.fade -= .02;
+        if (m.fade <= 0) Object.assign(m, spawn(false));
+      }
+      const alpha = (m.dead ? m.fade : m.a) * .32;
+      if (alpha <= 0) continue;
+      const g = ctx.createLinearGradient(m.x - m.len, 0, m.x, 0);
+      g.addColorStop(0, 'rgba(255,153,0,0)');
+      g.addColorStop(1, 'rgba(255,153,0,' + alpha + ')');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(m.x - m.len, m.y);
+      ctx.lineTo(m.x, m.y);
+      ctx.stroke();
+      // the head of a live record is a point of light; a cut one has none
+      if (!m.dead) {
+        ctx.fillStyle = 'rgba(255,196,110,' + (alpha * 1.7) + ')';
+        ctx.fillRect(m.x - 1, m.y - 1, 2, 2);
+      }
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function run() {
+    cancelAnimationFrame(raf);
+    if (still.matches || document.hidden) { ctx.clearRect(0, 0, w, h); return; }
+    raf = requestAnimationFrame(draw);
+  }
+
+  addEventListener('resize', () => { size(); run(); }, { passive: true });
+  document.addEventListener('visibilitychange', run);
+  still.addEventListener && still.addEventListener('change', run);
+  size(); run();
 })();
 </script>

@@ -331,9 +331,7 @@ X402_FACILITATOR_URL=http://localhost:4402              # point the seller at it
 
 The settler wallet pays gas and nothing else: the transfer is authorised by the
 payer's own signature carried in the call data, so the payer still holds no ETH
-and still signs everything itself. On Base a settlement costs roughly 0.0000225
-ETH, which is several times the 0.01 USDC payment, and that is simply what
-self-hosting costs.
+and still signs everything itself.
 
 Before pointing real money at any facilitator, ours or anyone's:
 
