@@ -188,6 +188,21 @@ E N T I T I E S   ( 4 )
   airtight-witness/att-1
 ```
 
+## Partner integrations, and where they are
+
+Each of these is executed, not imported. The evidence column is a command you
+can run or a transaction you can open.
+
+| Partner | What is used | Where | Evidence |
+|---|---|---|---|
+| **Sibyl Memory** | all three tiers: ENTITY records for deals, fingerprints, witnesses and attestations; HOT state for task position; the COLD journal for action history | [memory/driver-sibyl.mjs](airtight/memory/driver-sibyl.mjs), [memory/deals.mjs](airtight/memory/deals.mjs), [tasks/checkpoint.mjs](airtight/tasks/checkpoint.mjs) | `npm run test:sibyl`, and the deletion test below |
+| **Base** | an executed on-chain action: EIP-3009 `transferWithAuthorization` settled on Base mainnet, submitted by a facilitator in this repo | [x402/settle.mjs](airtight/x402/settle.mjs), [facilitator/server.mjs](airtight/facilitator/server.mjs) | [`0x13b2ac3f…092110`](https://basescan.org/tx/0x13b2ac3ff62386dad67add4d62e3ec508bcb2a033ee402fd30d37467c8092110) |
+| **x402** | the full challenge, verify and settle cycle against a live seller, plus a facilitator implementation | [x402/pay.mjs](airtight/x402/pay.mjs), [staging/x402/protocol.js](airtight/staging/x402/protocol.js), [seller/server.mjs](airtight/seller/server.mjs) | `node test/x402-e2e.test.mjs`, `node test/x402-crash.test.mjs` |
+
+Sibyl Memory is the substrate, not a logging sink. Remove it and the agent
+cannot answer the only question that matters on wake, so it refuses to pay
+rather than guessing. That is what the next section demonstrates.
+
 ## Where memory is load-bearing
 
 Delete the memory and the product stops working; that is the design, not a
@@ -402,10 +417,17 @@ node cli.mjs recall deal-1
 
 Working and tested: the Sibyl Memory driver, deal memory and state machine, the
 crash-safe local driver, resume assessment, selective disclosure, notarisation,
-a live x402 buyer and seller, and two SIGKILL suites: one over a mock ledger,
-one over the real protocol.
+a live x402 buyer and seller, a facilitator that settles on Base without a
+provider, task checkpointing with crash hooks, and two SIGKILL suites, one over
+a mock ledger and one over the real protocol.
 
-Not yet done: the replay UI.
+Also running: a private control room for operating the demo, and a public bench
+where a stranger can start an agent, kill it, and watch it settle once.
+
+Known limits. The public bench runs on Base Sepolia so it cannot be drained;
+mainnet settlement is proven by the transaction above. Checkpointing restores an
+agent's position, not its reasoning. And the agent can prove it paid, but it
+cannot prove a counterparty failed to deliver.
 
 ## Prior work
 
