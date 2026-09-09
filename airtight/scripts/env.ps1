@@ -46,6 +46,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path $env:SIBYL_MEMORY_DB) | Ou
 
 Write-Host "AIRTIGHT env loaded" -ForegroundColor Green
 Write-Host ("  payTo   " + $env:X402_PAY_TO)
+Write-Host ("  settler " + $env:FACILITATOR_ADDRESS + "  (gas only)")
 Write-Host ("  buyer   " + $env:DEMO_BUYER_ADDRESS)
 Write-Host ("  memory  " + $env:SIBYL_MEMORY_DB)
 Write-Host ("  mode    live, real USDC on " + $env:X402_NETWORK)
