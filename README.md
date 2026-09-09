@@ -354,8 +354,10 @@ npm test                    # no install step: zero runtime dependencies
 ```
 
 The test suite runs everything, including a real 402 exchange over HTTP against
-a locally spawned seller. No keys, funds, or network access are needed: the
-facilitator is mocked, nothing else is.
+a locally spawned seller. It needs no keys, funds or network access, so the
+facilitator is the one piece it stands in for. Nothing else is stood in for,
+and nothing on the live path is: the payments below settle real USDC through a
+real facilitator, and the mainnet transaction above is the receipt.
 
 **To run against Sibyl Memory** (the real substrate):
 
@@ -366,18 +368,24 @@ python -m venv ../.venv
 npm run test:sibyl
 ```
 
-**To run a live deal on Base Sepolia:**
+**To run a live deal.** Nothing is mocked here: real USDC moves and the
+transaction is on a public explorer.
 
 ```bash
-npm run burner >> ../.env        # generates throwaway wallets, prints the address to fund
-# fund the printed buyer address with Base Sepolia USDC (faucet.circle.com)
-# USDC only: no ETH; the facilitator pays gas
-
+npm run burner >> ../.env        # throwaway wallets, prints the address to fund
 set -a; source ../.env; set +a
-unset PAYMENT_MODE               # mock off
+unset PAYMENT_MODE               # no stand-ins
 
-node seller/server.mjs 4021                                   # terminal 1
-node buyer/agent.mjs http://localhost:4021/report/42 deal-1   # terminal 2
+# Base Sepolia: free USDC from faucet.circle.com, and the public facilitator
+# at https://x402.org/facilitator settles it. The buyer needs USDC only.
+
+# Base mainnet: set X402_NETWORK=base and run the facilitator in this repo,
+# whose settler wallet needs a little ETH for gas. The buyer still needs none.
+node facilitator/server.mjs                                   # terminal 1, mainnet only
+node scripts/facilitator-check.mjs http://localhost:4402 base # must say READY
+
+node seller/server.mjs 4021                                   # terminal 2
+node buyer/agent.mjs http://localhost:4021/report/42 deal-1   # terminal 3
 npm run onchain deal-1                                        # verify against the chain
 ```
 
