@@ -38,6 +38,8 @@
     --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
     --maxw:1440px;
+    --panel:960px;   /* instrument blocks: rows, tables, code */
+    --wide:1140px;   /* paired cards and the closing row */
     --gut:clamp(20px,4.5vw,64px);
   }
   *{box-sizing:border-box}
@@ -93,9 +95,9 @@
 
   /* ══ HERO ═══════════════════════════════════════════════════════ */
   .hero{
-    display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.92fr);
+    display:grid;grid-template-columns:minmax(0,1.06fr) minmax(300px,.94fr);
     gap:clamp(26px,4.5vw,64px);align-items:center;
-    padding-block:clamp(28px,4vw,58px);
+    padding-block:clamp(28px,4vw,58px);max-width:var(--wide);
   }
   @media (min-width:900px) and (min-height:620px){
     .hero{min-height:calc(100svh - 58px)}   /* 58px = the sticky nav */
@@ -170,7 +172,7 @@
   .mech{border-top:1px solid var(--hair);padding-block:clamp(52px,7vw,96px)}
   h2{font-size:clamp(26px,3.2vw,38px);font-weight:600;letter-spacing:-.025em;line-height:1.12;margin:0 0 16px;text-wrap:balance}
   .sub{font-size:17px;font-weight:300;color:var(--body);max-width:60ch;margin:0}
-  .flow{margin-top:clamp(30px,4vw,46px);border:1px solid var(--hair);border-radius:10px;overflow:hidden;background:var(--card)}
+  .flow{max-width:var(--panel);margin-top:clamp(30px,4vw,46px);border:1px solid var(--hair);border-radius:10px;overflow:hidden;background:var(--card)}
   .fr{display:grid;grid-template-columns:52px 1fr auto;gap:20px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--hair)}
   .fr:last-child{border-bottom:0}
   .fr .i{font-family:var(--mono);font-size:12px;color:var(--faint)}
@@ -189,7 +191,7 @@
 
   /* ══ MODULES: the principle, applied twice ═════════════════════ */
   .mods{border-top:1px solid var(--hair);padding-block:clamp(52px,7vw,96px)}
-  .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,3vw,32px);margin-top:clamp(26px,4vw,40px)}
+  .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,3vw,32px);margin-top:clamp(26px,4vw,40px);max-width:var(--wide)}
   .mod{border:1px solid var(--hair);border-radius:10px;background:var(--card);overflow:hidden;display:flex;flex-direction:column}
   .mod .hd{padding:14px 20px;background:var(--card-hd);border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:10px}
   .mod .hd code{font-family:var(--mono);font-size:12.5px;color:var(--link)}
@@ -211,7 +213,7 @@
   .proof .cap{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .proof h2{margin:16px 0 8px}
   .proof .where{font-size:15px;color:var(--muted);font-weight:300;margin:0 0 clamp(30px,4vw,48px)}
-  .hex{display:grid;gap:14px;overflow-x:auto;padding-bottom:4px}
+  .hex{display:grid;gap:14px;overflow-x:auto;padding-bottom:4px;max-width:var(--panel)}
   .hx{display:grid;grid-template-columns:clamp(150px,17vw,210px) 1fr;gap:clamp(14px,2vw,26px);align-items:baseline}
   .hx .k{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.04em}
   .hx .v{font-family:var(--mono);font-size:clamp(10.5px,1.32vw,16px);color:var(--go);letter-spacing:.02em;white-space:nowrap}
@@ -230,7 +232,7 @@
   /* ══ GATE: narrow inset, heavier ═══════════════════════════════ */
   .gate{padding-block:clamp(52px,7vw,96px)}
   .gate .inner{
-    max-width:760px;border:1px solid rgba(232,163,61,.45);border-radius:10px;
+    max-width:760px;margin-inline:auto;border:1px solid rgba(232,163,61,.45);border-radius:10px;
     background:var(--hold-dim);overflow:hidden;
   }
   .gate .top{padding:clamp(22px,3vw,34px) clamp(22px,3vw,34px) 0}
@@ -245,7 +247,7 @@
 
   /* ══ TABLE: dense, technical ═══════════════════════════════════ */
   .chaos{border-top:1px solid var(--hair);padding-block:clamp(52px,7vw,96px)}
-  .tw{margin-top:30px;border:1px solid var(--hair);border-radius:10px;overflow:hidden;overflow-x:auto}
+  .tw{max-width:var(--panel);margin-top:30px;border:1px solid var(--hair);border-radius:10px;overflow:hidden;overflow-x:auto}
   table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card)}
   th,td{text-align:left;padding:13px 20px;border-bottom:1px solid var(--hair);font-size:14px}
   th{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--card-hd)}
@@ -260,7 +262,7 @@
   /* ══ LAYER: what you import ════════════════════════════════════ */
   .layer{border-top:1px solid var(--hair);padding-block:clamp(52px,7vw,96px)}
   .code{
-    margin-top:28px;background:var(--deep);border:1px solid var(--hair);border-radius:10px;
+    max-width:var(--panel);margin-top:28px;background:var(--deep);border:1px solid var(--hair);border-radius:10px;
     padding:clamp(18px,2.6vw,26px);overflow-x:auto;
     font-family:var(--mono);font-size:clamp(12px,1.4vw,14px);line-height:1.85;color:var(--body);
   }
@@ -268,7 +270,7 @@
   .code .g{color:var(--go)}
   .code .b{color:var(--link)}
   .code .o{color:var(--accent)}
-  .guards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(24px,4vw,54px);margin-top:32px}
+  .guards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(24px,4vw,54px);margin-top:32px;max-width:var(--wide)}
   .guard{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--hair)}
   .guard .m{font-family:var(--mono);font-size:12px;color:var(--go)}
   .guard p{margin:0;font-size:15px;font-weight:300;color:var(--body)}
@@ -277,7 +279,7 @@
 
   /* ══ CLOSE ══════════════════════════════════════════════════════ */
   .close{border-top:1px solid var(--hair);padding-block:clamp(52px,7vw,88px)}
-  .close .in{display:flex;gap:28px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+  .close .in{display:flex;gap:28px;align-items:center;flex-wrap:wrap;justify-content:space-between;max-width:var(--wide)}
   .close h2{margin:0}
   .close p{margin:8px 0 0;font-size:16px;font-weight:300;color:var(--body);max-width:44ch}
 
