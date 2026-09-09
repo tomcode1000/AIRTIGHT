@@ -89,6 +89,12 @@ const s = await post('/settle', { x402Version: 1, paymentPayload: payload, payme
 ok(s.success === false, 'unfunded settler fails rather than crashing');
 ok(typeof s.errorReason === 'string' && s.errorReason.length > 0, 'and says why', s.errorReason?.slice(0, 90));
 
+// A request with no stated requirements must not settle. There is nothing to
+// check the recipient or amount against, so waving it through would spend our
+// gas on any authorisation a stranger sent.
+const bare = await post('/verify', { x402Version: 1, paymentPayload: payload });
+ok(bare.isValid === false, 'refuses when no requirements are stated', bare.invalidReason);
+
 child.kill();
 console.log(bad ? `\n${bad} FAILED\n` : '\nall facilitator checks pass\n');
 process.exit(bad ? 1 : 0);

@@ -108,6 +108,22 @@ function ipCount(ip, kind) {
   const now = Date.now();
   return (hits.get(`${ip}:${kind}`) || []).filter(t => now - t < 3600_000).length;
 }
+/**
+ * Forget addresses that have gone quiet.
+ *
+ * Every visitor adds a key to `hits` and nothing ever removed one, so a page
+ * left up for a month would hold an entry for every address that ever touched
+ * it. The timestamps inside were already expiring, so this leaks quietly rather
+ * than breaking anything, which is exactly the kind of leak that is found in
+ * production instead of in review.
+ */
+function forgetIdleIps() {
+  const now = Date.now();
+  for (const [key, times] of hits) {
+    const live = times.filter(t => now - t < 3600_000);
+    if (live.length) hits.set(key, live); else hits.delete(key);
+  }
+}
 
 // Behind a proxy the socket address is the proxy, so the client address has to
 // come from the forwarding header. That header is trivially spoofed by anyone
@@ -332,6 +348,7 @@ setInterval(() => {
     }
   }
   rollDay();
+  forgetIdleIps();
 }, 20_000).unref();
 
 /* ── admission ────────────────────────────────────────────────────────

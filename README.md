@@ -274,7 +274,30 @@ could manufacture disputes against honest sellers.
 
 ## Real settlement, verified on-chain
 
-Base Sepolia, live: tx
+### Base mainnet
+
+The agent was killed after signing and before the money moved, then woken cold.
+It settled once, on Base mainnet, through a facilitator in this repo:
+
+[`0x13b2ac3f…092110`](https://basescan.org/tx/0x13b2ac3ff62386dad67add4d62e3ec508bcb2a033ee402fd30d37467c8092110)
+
+```
+leg 1   AT:INTENT  AT:QUOTED  AT:AUTHORIZED  AT:IN_FLIGHT nonce 0x863fb08c...
+        SIGKILL                          the money had not moved
+leg 2   RESUMED RESUME from IN_FLIGHT -> reconcile-onchain
+        AT:SETTLED 0x13b2ac3f...         the SAME authorisation, not a new one
+        AT:PAID  AT:ATTESTED  AT:DELIVERED  AT:CLOSED
+```
+
+On chain: status SUCCESS, block 51084555, 102,876 gas. Buyer 0.39 to 0.38 USDC,
+seller 0.00 to 0.01, gas paid by the settler wallet. The woken process shared no
+state with the dead one; it read the stored authorisation and re-sent it.
+
+### Base Sepolia
+
+The public bench runs on Sepolia, where testnet USDC is free and strangers can
+press the buttons without spending anything. Same protocol, same nonce, same
+receipt. Earlier run: tx
 [`0x47f84e28…dd0221`](https://sepolia.basescan.org/tx/0x47f84e28df3686e27620ddac3ec1d2bccfc84bbe0dfb37938d8186ac24dd0221):
 
 ```
@@ -294,6 +317,34 @@ nonce is the only thing making the payment unrepeatable, so a woken agent must
 re-submit the authorisation it stored rather than sign a fresh one. Delete the
 memory layer and there is nothing to re-submit: the only remaining options are
 to double-pay or to never retry.
+
+## Settling without a facilitator provider
+
+A facilitator checks an EIP-3009 signature and calls `transferWithAuthorization`,
+paying the gas. Nothing in x402 requires it to be somebody else's service, and
+the hosted ones are not available everywhere. This repo runs one:
+
+```bash
+FACILITATOR_KEY=0x...  node facilitator/server.mjs      # serves /supported /verify /settle
+X402_FACILITATOR_URL=http://localhost:4402              # point the seller at it
+```
+
+The settler wallet pays gas and nothing else: the transfer is authorised by the
+payer's own signature carried in the call data, so the payer still holds no ETH
+and still signs everything itself. On Base a settlement costs roughly 0.0000225
+ETH, which is several times the 0.01 USDC payment, and that is simply what
+self-hosting costs.
+
+Before pointing real money at any facilitator, ours or anyone's:
+
+```bash
+node scripts/facilitator-check.mjs <url> [network]
+```
+
+It checks that the facilitator settles that network under scheme `exact`, that
+the USDC contract exists at the address you would sign against, and that the
+EIP-712 domain matches the token's own `name()` and `version()` read from the
+chain. It signs and spends nothing.
 
 ## Setup
 

@@ -80,9 +80,16 @@ function extract(body) {
   return { auth, signature, network: p.network || inner.network };
 }
 
-/** Does the authorisation actually pay what the seller asked for? */
+/**
+ * Does the authorisation actually pay what the seller asked for?
+ *
+ * A missing requirements block is refused rather than waved through. Without it
+ * there is nothing to check the recipient or the amount against, so this would
+ * settle any authorisation put in front of it and spend our gas doing it. An
+ * absent constraint is not a satisfied one.
+ */
 function matchesRequirements(auth, req) {
-  if (!req) return null;
+  if (!req) return 'no payment requirements were supplied, so there is nothing to check against';
   const want = String(req.payTo || req.pay_to || '').toLowerCase();
   if (want && String(auth.to).toLowerCase() !== want) {
     return `pays ${auth.to}, but this resource is paid to ${req.payTo || req.pay_to}`;

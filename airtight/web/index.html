@@ -296,6 +296,25 @@
     .fr .m{grid-column:2;justify-self:start}
     .hx{grid-template-columns:1fr;gap:3px}
   }
+  /* ── phone ──────────────────────────────────────────────────────
+     The call to action buttons are the only things anyone taps here, so they
+     get a real target size and stop sitting side by side on a narrow screen. */
+  @media (max-width:560px){
+    .hero{padding-block:24px 30px}
+    h1{font-size:30px}
+    .lede{font-size:16px}
+    .btn{min-height:46px;justify-content:center}
+    .hero .btn{width:100%}
+    .close .in{gap:16px}
+    .close .in .btn{width:100%}
+    .beat{grid-template-columns:1fr;gap:4px}
+    .beat .t{padding-top:0}
+    .fr{padding:13px 14px}
+    .rig header,.rig footer{padding-inline:13px}
+    .rig .track{padding-inline:13px}
+    .gate .term{margin:16px;padding:15px 16px}
+    .mod .bd{padding:16px}
+  }
   @media (prefers-reduced-motion:reduce){
     .st,.cut,.st .d,.st .w{transition:none!important}
   }
