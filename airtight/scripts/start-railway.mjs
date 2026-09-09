@@ -18,6 +18,7 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -43,6 +44,27 @@ if (missing.length) {
   console.error(`\nMissing required variables: ${missing.join(', ')}`);
   console.error('Set them in the host\'s environment, not in a file.\n');
   process.exit(1);
+}
+
+/**
+ * Say what is wrong at boot rather than at the first button press.
+ *
+ * A container that starts and then fails the moment someone tries to record
+ * something is far harder to diagnose than one that refuses to start, and the
+ * memory backend is a separate runtime that a Node-only build would leave out
+ * entirely. Checking it here turns that into one clear line in the deploy log.
+ */
+const mcp = process.env.SIBYL_MCP_BIN || 'sibyl-memory-mcp';
+if (process.env.AIRTIGHT_MEMORY !== 'file') {
+  // A bare name is resolved through PATH when it is spawned; only an explicit
+  // path can be checked here.
+  const named = mcp.includes('/') || mcp.includes('\\');
+  if (named && !existsSync(mcp)) {
+    console.error(`\nThe memory backend is not at ${mcp}.`);
+    console.error('The build installs it from requirements.txt into /opt/venv,');
+    console.error('and SIBYL_MCP_BIN must point at it.\n');
+    process.exit(1);
+  }
 }
 
 const kids = [];

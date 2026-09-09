@@ -6,7 +6,7 @@ nixPkgs = ["nodejs_22", "python312", "gcc"]
 
 [phases.install]
 cmds = [
-  "python -m venv /opt/venv",
+  "python3 -m venv /opt/venv",
   "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt",
 ]
 
@@ -14,6 +14,11 @@ cmds = [
 cmd = "node airtight/scripts/start-railway.mjs"
 
 [variables]
-# so the Node side can spawn `sibyl-memory-mcp` by name
-PATH = "/opt/venv/bin:/usr/local/bin:/usr/bin:/bin"
 NODE_ENV = "production"
+# The memory backend is reached by absolute path rather than by name.
+#
+# Setting PATH here would REPLACE the one Nixpacks builds, and Node lives in a
+# Nix store path rather than /usr/bin, so overriding it removed `node` from the
+# environment and the container died before any of this code ran. Naming the
+# binary outright needs no PATH at all.
+SIBYL_MCP_BIN = "/opt/venv/bin/sibyl-memory-mcp"
