@@ -124,7 +124,7 @@ const alreadyDone = await mem.history(taskId);   // on the next run, read it bac
 ## Install
 
 ```bash
-npm install github:tomcode1000/AITIGHT
+npm install github:tomcode1000/AIRTIGHT
 ```
 
 Zero dependencies, Node 22+. `airtight/payments` and `airtight/tasks` install

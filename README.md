@@ -22,7 +22,7 @@ INTENT → QUOTED → AUTHORIZED → IN_FLIGHT → PAID(tx) → DELIVERED(hash) 
 Zero runtime dependencies. Node 22+.
 
 ```bash
-npm install github:tomcode1000/AITIGHT       # while the repo is private, you need access
+npm install github:tomcode1000/AIRTIGHT       # while the repo is private, you need access
 ```
 
 ```js
