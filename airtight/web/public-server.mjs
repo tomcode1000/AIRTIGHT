@@ -78,6 +78,10 @@ const CAP = {
   taskConcurrent:   3,
   // Stop paying while there is still enough left to prove the point on camera.
   balanceFloor:     PRICE * 10,
+  // When we are our own facilitator the settler pays gas, and running out of
+  // gas fails a run halfway rather than refusing it up front. A settlement
+  // costs roughly 0.0000225 ETH on Base, so this holds back about two.
+  gasFloorEth:      Number(process.env.PUBLIC_GAS_FLOOR_ETH || 0.00005),
   runTtlMs:         3 * 60 * 1000,
 };
 
@@ -140,6 +144,32 @@ async function usdcBalance() {
     balance = { usdc: null, at: Date.now(), error: e.message };
   }
   return balance;
+}
+
+/* ── the settler's gas, when we are our own facilitator ────────────────
+   A hosted facilitator pays its own gas, so this only applies when the
+   facilitator URL points back at this machine. Checking it otherwise would
+   refuse runs over a wallet that is never used. */
+const SETTLER = process.env.FACILITATOR_ADDRESS || '';
+const OWN_FACILITATOR = /localhost|127\.0\.0\.1|\[::1\]/.test(process.env.X402_FACILITATOR_URL || '');
+
+let gas = { eth: null, at: 0, error: null };
+async function settlerGas() {
+  if (!OWN_FACILITATOR || !SETTLER) return { eth: null, error: null, skip: true };
+  if (Date.now() - gas.at < 30_000) return gas;
+  try {
+    const r = await fetch(RPC[NETWORK] || RPC['base-sepolia'], {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getBalance', params: [SETTLER, 'latest'] }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error.message);
+    gas = { eth: Number(BigInt(j.result)) / 1e18, at: Date.now(), error: null };
+  } catch (e) {
+    gas = { eth: null, at: Date.now(), error: e.message };
+  }
+  return gas;
 }
 
 /* ── run registry ─────────────────────────────────────────────────────── */
@@ -317,6 +347,13 @@ async function admit(kind, ip) {
     const b = await usdcBalance();
     if (b.error) return 'cannot read the demo wallet balance right now';
     if (b.usdc < CAP.balanceFloor) return 'the demo wallet is out of funds';
+    // Gas is a separate way to run dry, and on mainnet it runs out long before
+    // the USDC does. Refuse up front rather than fail a run at settle time.
+    const g = await settlerGas();
+    if (!g.skip) {
+      if (g.error) return 'cannot read the settlement wallet right now';
+      if (g.eth < CAP.gasFloorEth) return 'the settlement wallet is out of gas';
+    }
     return null;
   }
   if (live('task') >= CAP.taskConcurrent) return 'a few tasks are already running, try again in a moment';
@@ -345,6 +382,40 @@ const own = (req, url) => {
   return { run, action: m[2] };
 };
 
+/**
+ * The hosted landing page is the same file the private one serves, with the two
+ * operator rooms taken out.
+ *
+ * Those rooms drive a single global run and can delete the store, so they are
+ * for one trusted person at a keyboard, not for the internet. Every link that
+ * pointed at them now points at the bench, which is the thing a visitor can
+ * safely press. One file, two audiences, rather than a second copy that drifts.
+ */
+const OVERVIEW  = 'https://claude.ai/code/artifact/4f02f00f-5f88-45ea-a5a8-9f2e2ea979f4';
+const DEAL_ROOM = 'https://claude.ai/code/artifact/66be152e-6dbd-41cd-b120-3208e4370c65';
+const TASK_ROOM = 'https://claude.ai/code/artifact/9fb4b586-f957-4331-90fe-c4cae3448623';
+function publicise(html) {
+  return html
+    // the nav offered one pill per room; one bench replaces both
+    .replaceAll(`<a class="cta two" href="${TASK_ROOM}">Task Room <span class="ar">&rarr;</span></a>`, '')
+    .replaceAll(`<a class="cta" href="${DEAL_ROOM}">Deal Room <span class="ar">&rarr;</span></a>`,
+             '<a class="cta" href="/try">Try it live <span class="ar">&rarr;</span></a>')
+    .replaceAll(`<a class="btn primary" href="${DEAL_ROOM}">Open the Deal Room</a>`,
+             '<a class="btn primary" href="/try">Try it live</a>')
+    .replaceAll(`<a class="btn two" href="${TASK_ROOM}">Open the Task Room</a>`, '')
+    .replaceAll(`<a href="${DEAL_ROOM}">Open the Deal Room &rarr;</a>`, '<a href="/try">Try it live &rarr;</a>')
+    .replaceAll(`<a href="${TASK_ROOM}">Open the Task Room &rarr;</a>`, '<a href="/try">Try it live &rarr;</a>')
+    // anything left over, including the deck, must not escape to the internet
+    // the brand mark links to the page it is on
+    .replaceAll(OVERVIEW, '/')
+    .replaceAll(DEAL_ROOM, '/try')
+    .replaceAll(TASK_ROOM, '/try')
+    // a link whose href was swapped but whose label still names a private room
+    // would send visitors somewhere the words do not match
+    .replaceAll('Open the Deal Room', 'Try it live')
+    .replaceAll('Open the Task Room', 'Try it live');
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const p = url.pathname;
@@ -353,7 +424,12 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
 
-  if (p === '/' || p === '/index.html' || p === '/try') {
+  if (p === '/' || p === '/index.html') {
+    const html = publicise(await readFile(path.join(HERE, 'index.html'), 'utf8'));
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end(html);
+  }
+  if (p === '/try') {
     const html = await readFile(path.join(HERE, 'try.html'), 'utf8');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     return res.end(html);
@@ -370,6 +446,7 @@ const server = http.createServer(async (req, res) => {
       network: NETWORK, price: PRICE, explorer: EXPLORER[NETWORK] || EXPLORER['base-sepolia'],
       wallet: b.usdc == null ? null : Number(b.usdc.toFixed(4)),
       funded: b.usdc != null && b.usdc >= CAP.balanceFloor,
+      gas: (await settlerGas()).eth,
       payLeftToday: Math.max(0, CAP.payPerDay - day.pay),
       yourPayLeft: Math.max(0, CAP.payPerIpPerHour - ipCount(ip, 'pay')),
       yourTaskLeft: Math.max(0, CAP.taskPerIpPerHour - ipCount(ip, 'task')),
