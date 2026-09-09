@@ -1,0 +1,392 @@
+<title>Try AIRTIGHT</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230A1119"/><g transform="translate(9 13.7) scale(1.045)"><path d="M38 2 H8 A6 6 0 0 0 2 8 V27 A6 6 0 0 0 8 33 H38" fill="none" stroke="%23FF9900" stroke-width="4" stroke-linecap="butt"/><path d="M7 17.5 H19" fill="none" stroke="%23FF9900" stroke-width="4" stroke-linecap="butt"/><circle cx="19" cy="17.5" r="3.4" fill="%23FF9900"/><path d="M26.2 10.5 V24.5" fill="none" stroke="%23FF9900" stroke-width="3" stroke-linecap="butt"/><path d="M30 17.5 H44" fill="none" stroke="%23FF9900" stroke-width="4" stroke-linecap="butt"/></g></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap">
+
+<style>
+  /* Try AIRTIGHT: the public bench.
+     The private rooms stream raw stdout because an operator wants everything.
+     A stranger wants three things: what was written, when it died, and what it
+     did on waking. Everything else is removed rather than made smaller. */
+  :root{
+    --ground:#0A1119; --deep:#070D14; --card:#16222F; --card-hd:#1A2836; --inset:#0C1620;
+    --line:#2A3B4D; --hair:#1C2A38;
+    --text:#EDF1F5; --body:#A9B8C6; --muted:#7F8FA0; --faint:#54677A;
+    --link:#539FE5; --accent:#FF9900; --go:#3FBF7F; --hold:#E8A33D; --stop:#E05252;
+    --go-dim:rgba(63,191,127,.10); --hold-dim:rgba(232,163,61,.10);
+    --stop-dim:rgba(224,82,82,.10); --link-dim:rgba(83,159,229,.12);
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--link);text-decoration:none} a:hover{text-decoration:underline}
+  ::selection{background:var(--link);color:#08131D}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--link);outline-offset:3px}
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:clamp(18px,4vw,44px)}
+
+  nav{border-bottom:1px solid var(--hair);background:var(--deep)}
+  .nav-in{display:flex;align-items:center;gap:14px;padding:12px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.16em;font-size:14px;color:var(--text)}
+  .mk{width:27px;height:21.5px;color:var(--accent);flex:none;display:block}
+  .nav-in .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-family:var(--mono);font-size:10.5px;
+        letter-spacing:.06em;padding:4px 11px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .pill.go{color:var(--go);border-color:rgba(63,191,127,.45);background:var(--go-dim)}
+  .pill.stop{color:var(--stop);border-color:rgba(224,82,82,.45);background:var(--stop-dim)}
+
+  header.top{padding:clamp(30px,5vw,54px) 0 clamp(22px,3vw,32px)}
+  h1{margin:0 0 12px;font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.03em;line-height:1.06;text-wrap:balance}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{margin:0;max-width:60ch;font-size:16.5px;font-weight:300;color:var(--body)}
+  .lede b{font-weight:500;color:var(--text)}
+
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,2.5vw,26px);padding-bottom:44px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .mod{border:1px solid var(--hair);border-radius:10px;background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+  .mod .hd{display:flex;align-items:center;gap:10px;padding:13px 18px;background:var(--card-hd);border-bottom:1px solid var(--hair)}
+  .mod .hd h2{margin:0;font-size:16px;font-weight:600}
+  .mod .hd code{font-family:var(--mono);font-size:12px;color:var(--link)}
+  .mod .hd .cost{margin-left:auto}
+  .mod.pay .cost{color:var(--stop);border-color:rgba(224,82,82,.4);background:var(--stop-dim)}
+  .mod.task .cost{color:var(--hold);border-color:rgba(232,163,61,.4);background:var(--hold-dim)}
+  .mod .bd{padding:18px;display:grid;gap:16px;align-content:start;flex:1}
+  .claim{margin:0;font-size:17px;font-weight:300;line-height:1.4;color:var(--text)}
+  .claim b{font-weight:500}
+
+  .acts{display:flex;gap:9px;flex-wrap:wrap}
+  .btn{font-family:var(--sans);font-size:13.5px;font-weight:500;padding:9px 18px;border-radius:999px;cursor:pointer;
+       border:1px solid var(--line);background:transparent;color:var(--text);display:inline-flex;align-items:center;gap:8px;
+       transition:background .12s,color .12s,border-color .12s}
+  .btn:hover:not(:disabled){border-color:var(--muted)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#10202D;font-weight:600}
+  .btn.primary:hover:not(:disabled){background:#FFAD2E}
+  .btn.danger{border-color:var(--stop);color:var(--stop)}
+  .btn.danger:hover:not(:disabled){background:var(--stop);color:#1A0808}
+  .btn.wake{border-color:var(--go);color:var(--go)}
+  .btn.wake:hover:not(:disabled){background:var(--go);color:#07130D}
+  .btn:disabled{opacity:.3;cursor:not-allowed}
+
+  /* the step list: one line per thing that actually happened */
+  .steps{border:1px solid var(--hair);border-radius:8px;background:var(--inset);min-height:186px;
+         display:grid;align-content:start;padding:6px 0;overflow-y:auto;max-height:270px;
+         scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .steps::-webkit-scrollbar{width:7px}
+  .steps::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .empty{color:var(--faint);font-size:13.5px;padding:14px 16px;font-weight:300}
+  .s{display:grid;grid-template-columns:11px 1fr;gap:11px;align-items:baseline;padding:7px 16px}
+  .s i{width:7px;height:7px;border-radius:50%;background:var(--go);justify-self:center;position:relative;top:5px}
+  .s.mark i{background:var(--accent)}
+  .s.bad i{background:var(--stop)}
+  .s.wake i{background:var(--link)}
+  .s .n{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--text)}
+  .s .note{font-size:12.5px;color:var(--muted);font-weight:300}
+  .s.mark .n{color:var(--accent)}
+  .s.bad .n{color:var(--stop)}
+  .s.rule{padding:9px 16px;grid-template-columns:1fr}
+  .s.rule .n{color:var(--faint);font-size:11.5px;letter-spacing:.08em}
+
+  .facts{display:grid;gap:0;border:1px solid var(--hair);border-radius:8px;overflow:hidden}
+  .f{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--hair)}
+  .f:last-child{border-bottom:0}
+  .f .k{font-size:12.5px;color:var(--muted)}
+  .f .v{font-family:var(--mono);font-size:12.5px;text-align:right;overflow-wrap:anywhere;color:var(--body)}
+  .f .v.go{color:var(--go)} .f .v.link{color:var(--link)}
+
+  .verdict{border-radius:8px;padding:13px 16px;font-size:14px;font-weight:300;display:none}
+  .verdict.on{display:block}
+  .verdict.good{border:1px solid rgba(63,191,127,.45);background:var(--go-dim);color:#BFEBD3}
+  .verdict.good b{color:var(--go);font-weight:600}
+  .verdict.bad{border:1px solid rgba(224,82,82,.45);background:var(--stop-dim);color:#F0C4C4}
+
+  .why{border-top:1px solid var(--hair);padding:12px 18px;background:var(--inset);font-size:12.5px;color:var(--muted);font-weight:300}
+  .why b{color:var(--body);font-weight:500}
+
+  .note{border-top:1px solid var(--hair);padding:20px 0 34px;color:var(--faint);font-size:13px;font-weight:300}
+  .note code{font-family:var(--mono);color:var(--muted)}
+  footer{border-top:1px solid var(--hair);background:var(--deep);padding:18px 0;font-size:12.5px;color:var(--faint)}
+  .foot{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+  .foot .stack{display:flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<nav><div class="wrap nav-in">
+  <span class="brand">
+    <svg class="mk" viewBox="0 0 44 35" aria-hidden="true"><path d="M38 2 H8 A6 6 0 0 0 2 8 V27 A6 6 0 0 0 8 33 H38" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="butt"/><path d="M7 17.5 H19" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="butt"/><circle cx="19" cy="17.5" r="3.4" fill="currentColor"/><path d="M26.2 10.5 V24.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="butt"/><path d="M30 17.5 H44" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="butt"/></svg>
+    AIRTIGHT
+  </span>
+  <span class="right">
+    <span class="pill" id="net"><i></i><span>connecting</span></span>
+    <span class="pill" id="wallet">wallet -</span>
+  </span>
+</div></nav>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Kill the agent yourself. <em>It still only pays once.</em></h1>
+    <p class="lede">Two live agents, running on this server. Start one, kill it at its most dangerous
+      moment, then wake it. The payment agent settles <b>real USDC</b> and the transaction is on a public
+      explorer, so you do not have to take the result on trust.</p>
+  </header>
+
+  <div class="grid">
+    <!-- ── payments ─────────────────────────────────────────────── -->
+    <section class="mod pay" id="pay">
+      <div class="hd">
+        <h2>Payment Safety</h2><code>airtight/payments</code>
+        <span class="pill cost">irreversible</span>
+      </div>
+      <div class="bd">
+        <p class="claim">Killed after signing but before the money lands, an agent cannot tell
+          whether it paid. <b>This one can.</b></p>
+        <div class="acts">
+          <button class="btn primary" data-a="run">Run the agent</button>
+          <button class="btn danger" data-a="kill" disabled>Kill it</button>
+          <button class="btn wake" data-a="wake" disabled>Wake it</button>
+        </div>
+        <div class="steps"><p class="empty">Nothing has run yet. Press Run and watch what it writes before it pays.</p></div>
+        <div class="facts">
+          <div class="f"><span class="k">Nonce</span><span class="v" data-f="nonce">-</span></div>
+          <div class="f"><span class="k">Transaction</span><span class="v link" data-f="tx">-</span></div>
+          <div class="f"><span class="k">Settlements</span><span class="v go" data-f="paid">0</span></div>
+        </div>
+        <div class="verdict"></div>
+      </div>
+      <p class="why"><b>What to watch.</b> The authorisation is written to memory at
+        <code>IN_FLIGHT</code>, before any money moves. That is the only reason the woken agent
+        can re-send the same nonce instead of signing a new one.</p>
+    </section>
+
+    <!-- ── tasks ────────────────────────────────────────────────── -->
+    <section class="mod task" id="task">
+      <div class="hd">
+        <h2>Task Checkpointing</h2><code>airtight/tasks</code>
+        <span class="pill cost">free to run</span>
+      </div>
+      <div class="bd">
+        <p class="claim">A nine step job, killed at step four. It comes back at
+          <b>step four, not step zero.</b></p>
+        <div class="acts">
+          <button class="btn primary" data-a="run">Run the task</button>
+          <button class="btn danger" data-a="kill" disabled>Kill it</button>
+          <button class="btn wake" data-a="wake" disabled>Wake it</button>
+        </div>
+        <div class="steps"><p class="empty">Nothing has run yet. Press Run, then kill it partway through.</p></div>
+        <div class="facts">
+          <div class="f"><span class="k">Resumed at</span><span class="v go" data-f="resume">-</span></div>
+          <div class="f"><span class="k">Steps redone</span><span class="v" data-f="redone">-</span></div>
+        </div>
+        <div class="verdict"></div>
+      </div>
+      <p class="why"><b>What to watch.</b> Each step is recorded before the next one starts, so the
+        record is never behind the work. No money is involved here, which is why a lost record costs
+        time rather than funds.</p>
+    </section>
+  </div>
+
+  <p class="note">This runs one shared demo wallet, so it is rate limited per visitor and capped per day.
+    Nothing you press can spend more than the price shown above, and no wallet of yours is involved.
+    The source is at <a href="https://github.com/tomcode1000/AITIGHT">github.com/tomcode1000/AITIGHT</a>.</p>
+</div>
+
+<footer><div class="wrap foot">
+  <span>AIRTIGHT, write before the risk.</span>
+  <span class="stack"><span>Sibyl Memory</span><span>x402</span><span>Base</span></span>
+</div></footer>
+
+<script>
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+let CFG = { explorer: '', price: 0.01, network: '' };
+
+/* Each module owns a run id. It is the only credential, so it never leaves this page. */
+const M = {
+  pay:  { el: $('#pay'),  id: null, es: null, paid: 0, resumed: false },
+  task: { el: $('#task'), id: null, es: null, firstStep: null, resumeStep: null },
+};
+
+async function status() {
+  try {
+    const s = await (await fetch('/api/status')).json();
+    CFG = { explorer: s.explorer, price: s.price, network: s.network };
+    const net = $('#net');
+    net.className = 'pill ' + (s.funded ? 'go' : 'stop');
+    net.querySelector('span').textContent = `${s.network} · ${s.price} USDC per run`;
+    $('#wallet').textContent = s.wallet == null ? 'wallet unreadable' : `wallet ${s.wallet.toFixed(2)} USDC`;
+    if (!s.funded) disable('pay', 'The demo wallet is empty. The task module below still runs.');
+  } catch {}
+}
+
+function disable(mod, msg) {
+  const m = M[mod];
+  $$('.btn', m.el).forEach(b => { b.disabled = true; });
+  verdict(mod, 'bad', msg);
+}
+
+function buttons(mod, { run, kill, wake }) {
+  const m = M[mod];
+  $(`[data-a="run"]`,  m.el).disabled = !run;
+  $(`[data-a="kill"]`, m.el).disabled = !kill;
+  $(`[data-a="wake"]`, m.el).disabled = !wake;
+}
+
+function verdict(mod, tone, html) {
+  const v = $('.verdict', M[mod].el);
+  v.className = `verdict on ${tone}`;
+  v.innerHTML = html;
+}
+
+function addStep(mod, s) {
+  const box = $('.steps', M[mod].el);
+  const blank = $('.empty', box);
+  if (blank) blank.remove();
+  const row = document.createElement('div');
+  if (s.name === '───') {
+    row.className = 's rule';
+    row.innerHTML = `<span class="n">${esc(s.note)}</span>`;
+  } else {
+    const bad  = /REFUS|BLOCK|DISPUT/.test(s.name);
+    const wake = /RESUME|resumed|RECONCILE|skipped/i.test(s.name);
+    const mark = /IN_FLIGHT|checkpoint/.test(s.name);
+    row.className = 's' + (bad ? ' bad' : wake ? ' wake' : mark ? ' mark' : '');
+    row.innerHTML = `<i></i><span><span class="n">${esc(s.name)}</span>${s.note ? ` <span class="note">${esc(s.note)}</span>` : ''}</span>`;
+  }
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+}
+
+const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const setFact = (mod, k, v) => { const el = $(`[data-f="${k}"]`, M[mod].el); if (el) el.innerHTML = v; };
+
+/* ── the payment story, told from the events ───────────────────────── */
+function onPay(ev) {
+  const m = M.pay;
+  if (ev.type === 'step') {
+    addStep('pay', ev);
+    if (ev.name === 'PAID') { m.paid++; setFact('pay', 'paid', String(m.paid)); }
+    if (/^RESUME/.test(ev.name) || ev.name === 'RECONCILE') m.resumed = true;
+  }
+  if (ev.type === 'fact') {
+    if (ev.k === 'nonce') setFact('pay', 'nonce', esc(ev.v) + '…');
+    if (ev.k === 'tx') {
+      // The hash is read back from the record after the run, which takes a few
+      // seconds, so the row says so rather than sitting empty and looking broken.
+      if (ev.v === 'pending')   setFact('pay', 'tx', '<span style="color:var(--faint)">reading the record…</span>');
+      else if (ev.v === 'none') setFact('pay', 'tx', '-');
+      else {
+        const short = ev.v.slice(0, 10) + '…' + ev.v.slice(-6);
+        setFact('pay', 'tx', `<a href="${CFG.explorer}${esc(ev.v)}" target="_blank" rel="noopener">${short}</a>`);
+      }
+    }
+  }
+  if (ev.type === 'phase') {
+    if (ev.phase === 'armed') {
+      buttons('pay', { run: false, kill: true, wake: false });
+      verdict('pay', 'good', 'The authorisation is <b>written and stored</b>. The money has not moved. Kill it now.');
+    }
+    if (ev.phase === 'killed') {
+      buttons('pay', { run: false, kill: false, wake: true });
+      verdict('pay', 'bad', 'Killed with <b>SIGKILL</b>. Nothing was cleaned up, nothing was told. Wake it.');
+    }
+    if (ev.phase === 'done') {
+      buttons('pay', { run: true, kill: false, wake: false });
+      verdict('pay', 'good', m.paid <= 1
+        ? `<b>Paid once.</b> The woken agent re-sent the authorisation it had already stored, so the same nonce settled at most once.`
+        : `<b>${m.paid} settlements.</b> That should not happen, please report it.`);
+    }
+    if (ev.phase === 'refused') {
+      buttons('pay', { run: true, kill: false, wake: false });
+      verdict('pay', 'bad', 'The agent <b>refused to act</b> rather than guess. That is the safe answer, not a failure.');
+    }
+    if (ev.phase === 'failed') buttons('pay', { run: true, kill: false, wake: false });
+  }
+}
+
+/* ── the task story ────────────────────────────────────────────────── */
+function onTask(ev) {
+  const m = M.task;
+  if (ev.type === 'step') {
+    addStep('task', ev);
+    const n = Number(String(ev.note).match(/\d+/)?.[0]);
+    if (ev.name === 'checkpoint' && Number.isInteger(n) && m.firstStep === null) m.firstStep = n;
+    if (/resumed/i.test(ev.name) && Number.isInteger(n)) {
+      m.resumeStep = n;
+      setFact('task', 'resume', 'step ' + n);
+      setFact('task', 'redone', '0');
+    }
+  }
+  if (ev.type === 'phase') {
+    if (ev.phase === 'armed') {
+      buttons('task', { run: false, kill: true, wake: false });
+      verdict('task', 'good', 'It is holding partway through, with its position <b>already written</b>. Kill it.');
+    }
+    if (ev.phase === 'killed') {
+      buttons('task', { run: false, kill: false, wake: true });
+      verdict('task', 'bad', 'Killed with <b>SIGKILL</b> mid job. Wake it and watch where it starts.');
+    }
+    if (ev.phase === 'done') {
+      buttons('task', { run: true, kill: false, wake: false });
+      verdict('task', 'good', m.resumeStep != null
+        ? `Finished. It restarted at <b>step ${m.resumeStep}</b> and redid <b>nothing</b>.`
+        : 'Finished with every step recorded before it ran.');
+    }
+    if (ev.phase === 'failed') buttons('task', { run: true, kill: false, wake: false });
+  }
+}
+
+function listen(mod) {
+  const m = M[mod];
+  if (m.es) m.es.close();
+  m.es = new EventSource(`/api/run/${m.id}/events`);
+  m.es.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    if (ev.type === 'hello') { (ev.steps || []).forEach(s => addStep(mod, s)); return; }
+    (mod === 'pay' ? onPay : onTask)(ev);
+  };
+  m.es.onerror = () => {};
+}
+
+async function start(mod) {
+  const m = M[mod];
+  $('.steps', m.el).innerHTML = '';
+  $('.verdict', m.el).className = 'verdict';
+  m.paid = 0; m.resumed = false; m.firstStep = null; m.resumeStep = null;
+  setFact(mod, 'paid', '0');
+  buttons(mod, { run: false, kill: false, wake: false });
+
+  const r = await fetch('/api/run', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ module: mod }),
+  });
+  const j = await r.json();
+  if (!r.ok) { buttons(mod, { run: true, kill: false, wake: false }); return verdict(mod, 'bad', esc(j.error)); }
+  m.id = j.id;
+  listen(mod);
+}
+
+async function act(mod, action) {
+  const m = M[mod];
+  if (!m.id) return;
+  buttons(mod, { run: false, kill: false, wake: false });
+  const r = await fetch(`/api/run/${m.id}/${action}`, { method: 'POST' });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    verdict(mod, 'bad', esc(j.error || 'that run has expired, start a new one'));
+    buttons(mod, { run: true, kill: false, wake: false });
+  }
+}
+
+for (const mod of ['pay', 'task']) {
+  $$('.btn', M[mod].el).forEach(b => b.addEventListener('click', () => {
+    const a = b.dataset.a;
+    if (a === 'run') start(mod); else act(mod, a);
+  }));
+}
+
+status();
+setInterval(status, 30000);
+</script>
